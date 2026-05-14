@@ -264,18 +264,21 @@ h2 {
 /* BANNER */
 
 .banner-section {
-  padding: 20px 10% 70px;
+  padding: 0 2% 100px;
+  margin-top: -20px;
 }
 
 .banner-section img {
   width: 100%;
-  border-radius: 30px;
-  box-shadow: 0 0 50px rgba(0,0,0,0.45);
-  transition: 0.4s ease;
+  border-radius: 36px;
+  box-shadow:
+    0 0 80px rgba(0,0,0,0.55),
+    0 0 120px rgba(20,40,90,0.25);
+  transition: 0.5s ease;
 }
 
 .banner-section img:hover {
-  transform: scale(1.01);
+  transform: scale(1.015);
 }
 
 /* EXPERIENCE */
@@ -454,10 +457,14 @@ footer {
     padding: 15px 22px;
   }
 
-  .hero-image img {
-    width: 235px;
-    border-radius: 26px;
-  }
+.hero-image img {
+  width: 430px;
+  max-width: 100%;
+  border-radius: 34px;
+  box-shadow:
+    0 0 70px rgba(0,0,0,0.55),
+    0 0 120px rgba(20,40,90,0.2);
+}
 
   section {
     padding: 60px 6%;
