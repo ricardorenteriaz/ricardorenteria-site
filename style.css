@@ -424,7 +424,7 @@ footer {
   .hero {
     flex-direction: column-reverse;
     text-align: center;
-    padding: 150px 6% 55px;
+    padding: 220px 6% 55px;
     gap: 35px;
     min-height: auto;
   }
