@@ -65,6 +65,7 @@ body {
 
 .hero-text {
   flex: 1;
+  animation: fadeUp 1s ease;
 }
 
 .tag {
@@ -119,6 +120,10 @@ body {
   background: #4f8cff;
 }
 
+.hero-image {
+  animation: fadeIn 1.2s ease;
+}
+
 .hero-image img {
   width: 390px;
   border-radius: 30px;
@@ -149,6 +154,11 @@ h2 {
   padding: 35px;
   border-radius: 22px;
   text-align: center;
+  transition: 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-6px);
 }
 
 .stat-card h3 {
@@ -176,6 +186,11 @@ h2 {
   padding: 35px;
   border-radius: 24px;
   margin-bottom: 25px;
+  transition: 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
 }
 
 .card h3 {
@@ -202,6 +217,11 @@ h2 {
   background: linear-gradient(135deg, #1a2233, #12161f);
   padding: 40px;
   border-radius: 28px;
+  transition: 0.3s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-6px);
 }
 
 .project-card h3 {
@@ -227,6 +247,12 @@ h2 {
   padding: 15px 22px;
   border-radius: 16px;
   color: #d7d7d7;
+  transition: 0.3s ease;
+}
+
+.skills-grid span:hover {
+  transform: translateY(-4px);
+  background: #1c2230;
 }
 
 /* CONTACT */
@@ -252,31 +278,101 @@ footer {
   border-top: 1px solid #1b1f29;
 }
 
+/* ANIMATIONS */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 /* MOBILE */
 
 @media (max-width: 950px) {
 
   .navbar {
+    padding: 18px 6%;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+  }
+
+  .nav-links {
+    gap: 18px;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .hero {
     flex-direction: column-reverse;
     text-align: center;
-    padding-top: 180px;
+    padding: 150px 6% 55px;
+    gap: 35px;
+    min-height: auto;
+  }
+
+  .tag {
+    font-size: 0.78rem;
+    margin-bottom: 14px;
   }
 
   .hero h1 {
-    font-size: 3rem;
+    font-size: 2.55rem;
+    line-height: 1.08;
+    margin-bottom: 22px;
+  }
+
+  .description {
+    font-size: 1rem;
+    margin-bottom: 28px;
   }
 
   .buttons {
     justify-content: center;
+    gap: 14px;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+    padding: 15px 22px;
   }
 
   .hero-image img {
-    width: 280px;
+    width: 235px;
+    border-radius: 26px;
+  }
+
+  section {
+    padding: 60px 6%;
+  }
+
+  h2 {
+    font-size: 1.9rem;
+    margin-bottom: 25px;
+  }
+
+  .stat-card,
+  .card,
+  .project-card {
+    padding: 28px;
   }
 
 }
