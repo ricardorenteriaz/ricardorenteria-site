@@ -40,31 +40,31 @@ a {
   color: inherit;
 }
 
+.brand-banner {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: #080c12;
+}
+
+.brand-banner img {
+  width: 100%;
+  height: clamp(120px, 16vw, 210px);
+  object-fit: cover;
+  object-position: center 42%;
+  opacity: 0.92;
+}
+
 .site-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  overflow: hidden;
   border-bottom: 1px solid var(--line);
-  background:
-    linear-gradient(90deg, rgba(7, 10, 15, 0.94), rgba(7, 10, 15, 0.78)),
-    url("banner.png");
-  background-position: center 42%;
-  background-size: cover;
+  background: rgba(11, 15, 20, 0.86);
   backdrop-filter: blur(18px);
 }
 
-.site-header::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 15, 20, 0.44);
-  pointer-events: none;
-}
-
 .navbar {
-  position: relative;
-  z-index: 1;
   width: min(1180px, calc(100% - 40px));
   min-height: 86px;
   margin: 0 auto;
