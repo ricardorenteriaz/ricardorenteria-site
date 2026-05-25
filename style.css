@@ -44,12 +44,27 @@ a {
   position: sticky;
   top: 0;
   z-index: 10;
+  overflow: hidden;
   border-bottom: 1px solid var(--line);
-  background: rgba(11, 15, 20, 0.78);
+  background:
+    linear-gradient(90deg, rgba(7, 10, 15, 0.94), rgba(7, 10, 15, 0.78)),
+    url("banner.png");
+  background-position: center 42%;
+  background-size: cover;
   backdrop-filter: blur(18px);
 }
 
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 15, 20, 0.44);
+  pointer-events: none;
+}
+
 .navbar {
+  position: relative;
+  z-index: 1;
   width: min(1180px, calc(100% - 40px));
   min-height: 86px;
   margin: 0 auto;
