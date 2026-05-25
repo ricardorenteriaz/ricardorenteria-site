@@ -1,252 +1,111 @@
-<!-- REEMPLAZA TODO tu index.html con esto -->
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Ricardo Renteria is an MBA professional specializing in business operations, IT systems, custom CRM solutions, landing pages, and process optimization." />
+  <meta name="theme-color" content="#0c0f14" />
+  <meta property="og:title" content="Ricardo Renteria | Business Operations & IT" />
+  <meta property="og:description" content="Business operations, IT systems, custom CRM solutions, landing pages, and process optimization for organizations that need structure and execution." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="banner.png" />
 
-  <title>Ricardo Rentería | Business Operations & IT</title>
+  <title>Ricardo Renteria | Business Operations & IT</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 </head>
 
 <body>
+  <header class="site-header">
+    <nav class="navbar" aria-label="Primary navigation">
+      <a class="logo" href="#top" aria-label="Ricardo Renteria home">
+        <img src="logo.png" alt="RR" />
+      </a>
 
-  <nav class="navbar">
+      <div class="nav-actions">
+        <div class="language-switcher" aria-label="Language selector">
+          <button class="language-button active" type="button" data-lang="en" aria-pressed="true"><span aria-hidden="true">🇺🇸</span><span>EN</span></button>
+          <button class="language-button" type="button" data-lang="es" aria-pressed="false"><span aria-hidden="true">🇲🇽</span><span>ES</span></button>
+        </div>
 
-    <div class="logo">
-  <img src="logo.png" alt="RR Logo">
-</div>
-
-    <div class="nav-links">
-      <a href="#about">About</a>
-      <a href="#experience">Experience</a>
-      <a href="#skills">Skills</a>
-      <a href="#contact">Contact</a>
-    </div>
-
-  </nav>
-
-  <section class="hero">
-
-    <div class="hero-text">
-
-      <p class="tag">
-        RICARDO RENTERÍA
-      </p>
-
-      <h1>
-        Business Operations <br>
-        IT Systems <br>
-        Executive Support
-      </h1>
-
-      <p class="description">
-        MBA professional with 15+ years of experience bridging operations,
-        technology, process optimization, and executive-level support
-        to improve organizational efficiency and business performance.
-      </p>
-
-      <div class="buttons">
-
-        <a href="Ricardo_Renteria_CV.pdf" target="_blank" class="btn primary">
-          Download CV
-        </a>
-
-        <a href="https://mx.linkedin.com/in/ricardorenteriaz/" target="_blank" class="btn secondary">
-          LinkedIn
-        </a>
-
+        <div class="nav-links">
+          <a href="#about" data-i18n="navAbout">About</a>
+          <a href="#experience" data-i18n="navExperience">Experience</a>
+          <a href="#catalog" data-i18n="navCatalog">Catalog</a>
+          <a href="#contact" data-i18n="navContact">Contact</a>
+        </div>
       </div>
+    </nav>
+  </header>
 
-    </div>
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-content">
+        <p class="eyebrow" data-i18n="heroEyebrow">Ricardo Renteria</p>
+        <h1 id="hero-title" data-i18n="heroTitle">Business Operations & IT Systems Leadership</h1>
+        <p class="hero-description" data-i18n="heroDescription">MBA professional with 15+ years of experience connecting operations, technology, process improvement, and executive-level support to help organizations work with more clarity, speed, and control.</p>
+        <div class="hero-actions" aria-label="Primary actions">
+          <a href="Ricardo_Renteria_CV.pdf" target="_blank" rel="noopener" class="btn primary" data-i18n="downloadCv">Download CV</a>
+          <a href="https://wa.me/527294745365" target="_blank" rel="noopener" class="btn secondary">WhatsApp</a>
+        </div>
+      </div>
+      <figure class="hero-image"><img src="profile.jpg" alt="Portrait of Ricardo Renteria" data-i18n-attr="alt:heroImageAlt" /></figure>
+    </section>
 
-    <div class="hero-image">
-      <img src="profile.jpg" alt="Ricardo Rentería">
-    </div>
+    <section class="stats" aria-label="Professional highlights">
+      <article class="stat-card"><strong>15+</strong><span data-i18n="statExperience">Years of experience</span></article>
+      <article class="stat-card"><strong>MBA</strong><span data-i18n="statMba">Business administration</span></article>
+      <article class="stat-card"><strong>IT + Ops</strong><span data-i18n="statHybrid">Hybrid execution profile</span></article>
+      <article class="stat-card"><strong>700K+</strong><span data-i18n="statFiles">Files processed in automation</span></article>
+    </section>
 
-  </section>
+    <section class="section about" id="about">
+      <div class="section-heading"><p class="eyebrow" data-i18n="profileEyebrow">Profile</p><h2 data-i18n="profileTitle">Operational structure with a technical edge.</h2></div>
+      <p data-i18n="profileBody">I specialize in business operations, executive support, technology implementation, and process optimization. My work focuses on aligning daily execution with strategic objectives through practical systems, clear communication, and reliable follow-through.</p>
+    </section>
 
-  <section class="stats">
+    <section class="banner-section" aria-label="Ricardo Renteria professional banner"><img src="banner.png" alt="Ricardo Renteria professional profile banner" data-i18n-attr="alt:bannerAlt" /></section>
 
-    <div class="stat-card">
-      <h3>15+</h3>
-      <p>Years Experience</p>
-    </div>
+    <section class="section experience" id="experience">
+      <div class="section-heading"><p class="eyebrow" data-i18n="experienceEyebrow">Experience</p><h2 data-i18n="experienceTitle">Work across operations, technology, and leadership support.</h2></div>
+      <div class="timeline">
+        <article class="timeline-item"><span>2023 - 2025</span><h3>MBA - UNITEC</h3><p data-i18n="timelineMba">Business administration, strategy, leadership, and operational decision-making.</p></article>
+        <article class="timeline-item"><span>2020 - 2026</span><h3>AG Terramex Energy</h3><p data-i18n="timelineTerramex">Executive support, IT systems leadership, operational coordination, and process optimization.</p></article>
+        <article class="timeline-item"><span>2006 - 2020</span><h3>Springfield School</h3><p data-i18n="timelineSpringfield">IT systems coordination, educational technology support, infrastructure, and digital transformation.</p></article>
+      </div>
+      <div class="experience-grid">
+        <article class="card"><p class="role" data-i18n="terramexRole">Executive Assistant & IT Systems Lead</p><h3>AG Terramex Energy</h3><ul><li data-i18n="terramexItem1">Process optimization and operational efficiency initiatives</li><li data-i18n="terramexItem2">Executive coordination and strategic operational support</li><li data-i18n="terramexItem3">Technology implementation and systems improvement</li><li data-i18n="terramexItem4">Cross-functional communication and stakeholder management</li></ul></article>
+        <article class="card"><p class="role" data-i18n="springfieldRole">IT Systems Coordinator</p><h3>Springfield School</h3><ul><li data-i18n="springfieldItem1">Educational technology systems management</li><li data-i18n="springfieldItem2">Infrastructure and operational support</li><li data-i18n="springfieldItem3">Digital transformation initiatives</li><li data-i18n="springfieldItem4">Technology modernization projects</li></ul></article>
+      </div>
+    </section>
 
-    <div class="stat-card">
-      <h3>MBA</h3>
-      <p>Business Administration</p>
-    </div>
+    <section class="section featured-project" id="catalog">
+      <div class="section-heading"><p class="eyebrow" data-i18n="catalogEyebrow">Product Catalog</p><h2 data-i18n="catalogTitle">Digital tools tailored to the client.</h2></div>
+      <div class="project-grid">
+        <article class="project-card"><div><p class="eyebrow" data-i18n="projectAutomationEyebrow">Featured Project</p><h3 data-i18n="projectAutomationTitle">Mass PDF Processing & Automation</h3></div><p data-i18n="projectAutomationBody">Designed and executed a large-scale automation workflow for processing, organizing, validating, and compressing more than 700,000 PDF files for operational and cloud-based delivery.</p></article>
+        <article class="project-card"><div><p class="eyebrow" data-i18n="projectCrmEyebrow">Product</p><h3 data-i18n="projectCrmTitle">Custom CRM Systems</h3></div><p data-i18n="projectCrmBody">I build CRM systems around the client's real workflow, like a tailored suit: clean pipelines, useful dashboards, organized contacts, quote workflows, and tools that match how the business actually sells and follows up.</p></article>
+        <article class="project-card"><div><p class="eyebrow" data-i18n="projectLandingEyebrow">Product</p><h3 data-i18n="projectLandingTitle">Landing Pages</h3></div><p data-i18n="projectLandingBody">I create focused landing pages for professionals and businesses that need a polished online presence, a clear offer, strong contact paths, and a design that feels credible from the first screen.</p></article>
+      </div>
+    </section>
 
-    <div class="stat-card">
-      <h3>IT + Ops</h3>
-      <p>Hybrid Professional Profile</p>
-    </div>
+    <section class="section skills" id="skills">
+      <div class="section-heading"><p class="eyebrow" data-i18n="skillsEyebrow">Core Skills</p><h2 data-i18n="skillsTitle">Built for execution-heavy environments.</h2></div>
+      <div class="skills-grid" aria-label="Core skills"><span data-i18n="skillBusiness">Business Operations</span><span data-i18n="skillProcess">Process Optimization</span><span data-i18n="skillExecutive">Executive Support</span><span data-i18n="skillSystems">IT Systems</span><span data-i18n="skillCrm">Custom CRM</span><span data-i18n="skillLanding">Landing Pages</span><span data-i18n="skillTransformation">Digital Transformation</span><span data-i18n="skillProject">Project Management</span><span data-i18n="skillProblem">Problem Solving</span></div>
+    </section>
 
-    <div class="stat-card">
-      <h3>700K+</h3>
-      <p>Files Processed in Automation Project</p>
-    </div>
+    <section class="section contact" id="contact">
+      <div class="contact-panel">
+        <div><p class="eyebrow" data-i18n="contactEyebrow">Contact</p><h2 data-i18n="contactTitle">Let's connect.</h2><p data-i18n="contactBody">Available for business operations, IT systems, custom CRM, landing page, executive support, and process improvement conversations.</p></div>
+        <div class="contact-actions"><a href="mailto:renteriamba@gmail.com" class="contact-link">renteriamba@gmail.com</a><a href="https://wa.me/527294745365" target="_blank" rel="noopener" class="contact-link">WhatsApp: +52 729 474 5365</a><a href="https://mx.linkedin.com/in/ricardorenteriaz/" target="_blank" rel="noopener" class="contact-link" data-i18n="linkedinProfile">LinkedIn Profile</a></div>
+        <div class="business-socials" aria-label="Business social media"><p class="eyebrow" data-i18n="businessSocials">Business Socials</p><div class="social-links"><a href="#" class="social-link disabled-link" aria-disabled="true">LinkedIn Business</a><a href="#" class="social-link disabled-link" aria-disabled="true">Instagram</a><a href="#" class="social-link disabled-link" aria-disabled="true">Facebook</a><a href="#" class="social-link disabled-link" aria-disabled="true">TikTok</a></div></div>
+      </div>
+    </section>
+  </main>
 
-  </section>
-
-  <section class="about" id="about">
-
-    <h2>About Me</h2>
-
-    <p>
-      Results-driven professional specializing in business operations,
-      executive support, technology implementation, and process optimization.
-      Experienced in aligning operational efficiency with strategic business
-      objectives through a strong combination of technical expertise and MBA-level business perspective.
-    </p>
-
-  </section>
-
-<section class="banner-section">
-  <img src="banner.png" alt="Ricardo Rentería Banner">
-</section>
-
-  <section class="experience" id="experience">
-
-    <h2>Professional Experience</h2>
-
-<div class="timeline">
-
-  <div class="timeline-item">
-    <div class="timeline-dot"></div>
-    <div class="timeline-content">
-      <span>2023 — 2025</span>
-      <h3>MBA — UNITEC</h3>
-      <p>Business administration, strategy, leadership, and operational decision-making.</p>
-    </div>
-  </div>
-
-  <div class="timeline-item">
-    <div class="timeline-dot"></div>
-    <div class="timeline-content">
-      <span>2020 — Present</span>
-      <h3>AG Terramex Energy</h3>
-      <p>Executive support, IT systems leadership, operational coordination, and process optimization.</p>
-    </div>
-  </div>
-
-  <div class="timeline-item">
-    <div class="timeline-dot"></div>
-    <div class="timeline-content">
-      <span>2006 — 2020</span>
-      <h3>Springfield School</h3>
-      <p>IT systems coordination, educational technology support, infrastructure, and digital transformation.</p>
-    </div>
-  </div>
-
-</div>
-
-    <div class="card">
-
-      <h3>AG Terramex Energy</h3>
-
-      <p class="role">
-        Executive Assistant & IT Systems Lead
-      </p>
-
-      <ul>
-        <li>Process optimization and operational efficiency initiatives</li>
-        <li>Executive coordination and strategic operational support</li>
-        <li>Technology implementation and systems improvement</li>
-        <li>Cross-functional communication and stakeholder management</li>
-      </ul>
-
-    </div>
-
-    <div class="card">
-
-      <h3>Springfield School</h3>
-
-      <p class="role">
-        IT Systems Coordinator
-      </p>
-
-      <ul>
-        <li>Educational technology systems management</li>
-        <li>Infrastructure and operational support</li>
-        <li>Digital transformation initiatives</li>
-        <li>Technology modernization projects</li>
-      </ul>
-
-    </div>
-
-  </section>
-
-  <section class="projects">
-
-    <h2>Featured Project</h2>
-
-    <div class="project-card">
-
-      <h3>Mass PDF Processing & Automation</h3>
-
-      <p>
-        Designed and executed a large-scale automation workflow involving
-        the processing, organization, validation, and compression of more
-        than 700,000 PDF files for operational and cloud-based delivery.
-      </p>
-
-    </div>
-
-  </section>
-
-  <section class="skills" id="skills">
-
-    <h2>Core Skills</h2>
-
-    <div class="skills-grid">
-
-      <span>Business Operations</span>
-      <span>Process Optimization</span>
-      <span>Executive Support</span>
-      <span>IT Systems</span>
-      <span>Digital Transformation</span>
-      <span>Project Management</span>
-      <span>Strategic Thinking</span>
-      <span>Problem Solving</span>
-
-    </div>
-
-  </section>
-
-  <section class="contact" id="contact">
-
-    <h2>Contact</h2>
-
-    <p>Email: renteriamba@gmail.com</p>
-
-    <p>WhatsApp: +52 729 474 5365</p>
-
-    <a href="https://wa.me/527294745365" target="_blank">
-      Message me on WhatsApp
-    </a>
-
-    <a href="https://mx.linkedin.com/in/ricardorenteriaz/" target="_blank">
-      LinkedIn Profile
-    </a>
-
-  </section>
-
-  <footer>
-    © 2026 Ricardo Rentería — Richie x Orión
-  </footer>
-
+  <footer><p data-i18n="footerText">© 2026 Ricardo Renteria. All rights reserved.</p></footer>
   <script src="script.js"></script>
-
 </body>
 </html>
