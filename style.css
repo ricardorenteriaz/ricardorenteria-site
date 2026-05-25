@@ -45,14 +45,15 @@ a {
   overflow: hidden;
   border-bottom: 1px solid var(--line);
   background: #080c12;
+  padding: 10px 0;
 }
 
 .brand-banner img {
-  width: 100%;
-  height: clamp(120px, 16vw, 210px);
-  object-fit: cover;
-  object-position: center 42%;
-  opacity: 0.92;
+  width: min(100%, 1280px);
+  height: clamp(118px, 15vw, 190px);
+  margin: 0 auto;
+  object-fit: contain;
+  opacity: 0.96;
 }
 
 .site-header {
@@ -70,7 +71,7 @@ a {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 24px;
 }
 
