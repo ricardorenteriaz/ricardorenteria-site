@@ -496,7 +496,11 @@ footer {
 }
 
 .contact-copy {
-  align-self: center;
+  align-self: start;
+}
+
+.contact-copy .contact-actions {
+  margin-top: 24px;
 }
 
 .contact-form {
