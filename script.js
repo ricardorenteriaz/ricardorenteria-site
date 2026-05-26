@@ -52,6 +52,8 @@ const disabledLinks = document.querySelectorAll(".disabled-link");
 const metaDescription = document.querySelector('meta[name="description"]');
 const paymentForm = document.querySelector("[data-payment-form]");
 const paymentFeedback = document.querySelector("[data-payment-feedback]");
+const paymentButtonImage = document.querySelector("[data-payment-button-image]");
+const paymentButton = document.querySelector(".clip-pay-button");
 const clipCheckoutEndpoint = window.RR_CLIP_CHECKOUT_ENDPOINT || "https://itpdqkumkgaossbfhqhp.supabase.co/functions/v1/clip-checkout";
 let currentLanguage = localStorage.getItem("preferredLanguage") || "en";
 
@@ -71,6 +73,12 @@ function applyLanguage(language) {
       if (attribute && key && dictionary[key]) element.setAttribute(attribute, dictionary[key]);
     });
   });
+  if (paymentButtonImage) {
+    const isSpanish = language === "es";
+    paymentButtonImage.src = isSpanish ? "clip-pay-es.svg" : "clip-pay-en.svg";
+    paymentButtonImage.alt = isSpanish ? "Paga con Clip" : "Pay with Clip";
+    if (paymentButton) paymentButton.setAttribute("aria-label", paymentButtonImage.alt);
+  }
   languageButtons.forEach((button) => {
     const isActive = button.dataset.lang === language;
     button.classList.toggle("active", isActive);
