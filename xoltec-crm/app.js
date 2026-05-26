@@ -1013,7 +1013,7 @@ function renderUsers() {
             <div class="quote-card-actions">
               <button class="ghost-button" data-edit-user="${user.user}" type="button">Editar</button>
               ${
-                user.superAdmin
+                isCurrentUser(user)
                   ? ""
                   : `<button class="danger-button" data-delete-user="${user.user}" type="button">Eliminar</button>`
               }
@@ -1062,7 +1062,7 @@ function updateUserFormMode() {
 
 function deleteUser(userName) {
   const user = state.users.find((item) => item.user === userName);
-  if (!user || user.superAdmin) return;
+  if (!user || isCurrentUser(user)) return;
 
   const confirmed = window.confirm(`¿Eliminar el usuario ${user.user}?`);
   if (!confirmed) return;
@@ -1073,6 +1073,11 @@ function deleteUser(userName) {
   }
   saveState();
   renderUsers();
+}
+
+function isCurrentUser(user) {
+  const currentUser = getCurrentUser();
+  return Boolean(user && currentUser && user.user === currentUser.user);
 }
 
 function setupSignaturePad() {
@@ -1620,6 +1625,41 @@ function generateQuotePdf(quoteId) {
           .bank-item span { color: #6b7280; font-size: 8.8px; font-weight: 800; letter-spacing: 0.55px; text-transform: uppercase; }
           .bank-item strong { color: #17202b; font-size: 11px; line-height: 1.25; }
           .invoice-note { margin: 0; padding: 10px 12px; color: #4b5563; font-size: 10px; line-height: 1.35; background: #f8fafc; }
+          .solar-map-hero { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; border-bottom: 1px solid #d7dde5; padding-bottom: 14px; margin-bottom: 18px; }
+          .solar-map-hero img { width: 124px; height: auto; }
+          .solar-map-kicker { width: fit-content; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(235,168,58,0.16); color: #7a520f; font-size: 10px; font-weight: 900; letter-spacing: 1.2px; padding: 7px 12px; text-transform: uppercase; }
+          .solar-map-kicker::before { content: ""; width: 18px; height: 3px; border-radius: 99px; background: #eba83a; }
+          .solar-map-hero h1 { color: #203a49; font-size: 27px; line-height: 1.04; margin: 12px 0 8px; max-width: 520px; }
+          .solar-map-hero p { color: #5f6672; font-size: 12px; line-height: 1.42; margin: 0; max-width: 560px; }
+          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; position: relative; margin-top: 8px; }
+          .solar-node { min-height: 112px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.82); padding: 13px; box-shadow: 0 10px 22px rgba(15,23,42,0.06); position: relative; }
+          .solar-node::after { content: ""; position: absolute; right: -15px; top: 50%; width: 14px; height: 2px; background: #18a058; }
+          .solar-node:nth-child(3)::after, .solar-node:nth-child(6)::after { display: none; }
+          .solar-node-head { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
+          .solar-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; font-size: 18px; font-weight: 900; }
+          .solar-node h2 { color: #17202b; font-size: 13.5px; margin: 0; line-height: 1.15; }
+          .solar-node p { color: #4b5563; font-size: 10.5px; line-height: 1.35; margin: 0; }
+          .solar-node.accent .solar-icon { color: #18a058; background: #ecfdf5; border-color: #b7ebcf; }
+          .solar-node.gold .solar-icon { color: #b7791f; background: #fff8e8; border-color: #f0d7a0; }
+          .solar-stats-title { display: flex; align-items: center; gap: 10px; color: #203a49; font-size: 16px; margin: 18px 0 10px; }
+          .solar-stats-title::before { content: ""; width: 32px; height: 4px; border-radius: 99px; background: #18a058; }
+          .solar-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+          .solar-metric { border: 1px solid #d7dde5; border-radius: 13px; background: rgba(255,255,255,0.82); padding: 12px 10px; min-height: 84px; }
+          .solar-metric strong { display: block; color: #203a49; font-size: 20px; line-height: 1; margin-bottom: 5px; }
+          .solar-metric span { display: block; color: #5f6672; font-size: 9.8px; line-height: 1.25; font-weight: 700; }
+          .solar-metric.green strong { color: #18a058; }
+          .solar-metric.gold strong { color: #eba83a; }
+          .solar-metric.teal strong { color: #2bbeb4; }
+          .generation-box { margin-top: 14px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.82); padding: 14px; }
+          .generation-box h2 { margin: 0 0 12px; color: #203a49; font-size: 16px; }
+          .generation-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+          .generation-item { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; border-right: 1px solid #d7dde5; padding-right: 10px; }
+          .generation-item:last-child { border-right: 0; }
+          .generation-item b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #eef6f5; color: #18a058; font-size: 18px; }
+          .generation-item:nth-child(2) b { color: #0f6f9f; }
+          .generation-item:nth-child(3) b { color: #b7791f; background: #fff8e8; }
+          .generation-item strong { display: block; color: #17202b; font-size: 11.5px; margin-bottom: 4px; }
+          .generation-item span { color: #4b5563; font-size: 10px; line-height: 1.32; }
           @media screen and (max-width: 620px) {
             html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
             body { background: #e8edf2; }
@@ -1635,6 +1675,10 @@ function generateQuotePdf(quoteId) {
             th, td { padding: 6px 4px; font-size: 9.5px; }
             .totals { width: 72%; }
             .annex-grid, .annex-stats { grid-template-columns: 1fr; }
+            .solar-map-hero, .solar-flow, .solar-metrics, .generation-grid { grid-template-columns: 1fr; }
+            .solar-node::after { display: none; }
+            .generation-item { border-right: 0; border-bottom: 1px solid #d7dde5; padding-bottom: 10px; }
+            .generation-item:last-child { border-bottom: 0; }
             .bank-grid { grid-template-columns: 1fr; }
             .bank-item { border-right: 0; }
             .signature { grid-template-columns: 1fr; gap: 14px; }
@@ -1816,6 +1860,61 @@ function generateQuotePdf(quoteId) {
                 <strong>Mensaje clave para el cliente</strong>
                 <p>La interconexión formaliza el sistema y habilita el esquema de medición para que el cliente vea el beneficio reflejado en su facturación eléctrica.</p>
               </article>
+            </div>
+          </div>
+          ${footer}
+        </section>
+        <section class="page page-break">
+          <div class="watermark soft"></div>
+          <div class="content">
+            <div class="solar-map-hero">
+              <div>
+                <span class="solar-map-kicker">Mapa rápido</span>
+                <h1>Cómo funciona un sistema solar fotovoltaico</h1>
+                <p>Resumen ejecutivo para entender componentes, flujo de energía, interconexión y criterios de selección en una cotización profesional.</p>
+              </div>
+              <img src="${logoUrl}" alt="XOLTEC" />
+            </div>
+            <div class="solar-flow">
+              <article class="solar-node">
+                <div class="solar-node-head"><span class="solar-icon">PV</span><h2>1. Paneles</h2></div>
+                <p>Capturan radiación solar y producen corriente continua para iniciar la generación.</p>
+              </article>
+              <article class="solar-node accent">
+                <div class="solar-node-head"><span class="solar-icon">CA</span><h2>2. Inversor</h2></div>
+                <p>Convierte corriente continua en corriente alterna apta para equipos eléctricos.</p>
+              </article>
+              <article class="solar-node">
+                <div class="solar-node-head"><span class="solar-icon">H</span><h2>3. Consumo</h2></div>
+                <p>La energía se usa en el hogar o negocio en tiempo real, reduciendo consumo de red.</p>
+              </article>
+              <article class="solar-node accent">
+                <div class="solar-node-head"><span class="solar-icon">B</span><h2>4. Baterías</h2></div>
+                <p>Almacenan energía para usarla cuando el proyecto lo requiere.</p>
+              </article>
+              <article class="solar-node">
+                <div class="solar-node-head"><span class="solar-icon">CFE</span><h2>5. Red CFE</h2></div>
+                <p>Los excedentes pueden inyectarse mediante medidor bidireccional.</p>
+              </article>
+              <article class="solar-node gold">
+                <div class="solar-node-head"><span class="solar-icon">M</span><h2>6. Monitoreo</h2></div>
+                <p>El inversor registra producción y permite revisar diagnósticos o reportes.</p>
+              </article>
+            </div>
+            <h1 class="solar-stats-title">Indicadores clave</h1>
+            <div class="solar-metrics">
+              <article class="solar-metric green"><strong>2-6</strong><span>años de amortización estimada</span></article>
+              <article class="solar-metric gold"><strong>25+</strong><span>años de vida útil esperada</span></article>
+              <article class="solar-metric teal"><strong>80%</strong><span>producción aproximada al año 25</span></article>
+              <article class="solar-metric"><strong>Mín.</strong><span>mantenimiento operativo</span></article>
+            </div>
+            <div class="generation-box">
+              <h2>¿De qué depende la generación?</h2>
+              <div class="generation-grid">
+                <div class="generation-item"><b>1</b><div><strong>Tamaño del sistema</strong><span>Más capacidad instalada puede cubrir mayor demanda.</span></div></div>
+                <div class="generation-item"><b>2</b><div><strong>Cantidad y eficiencia de paneles</strong><span>El tipo de panel y su potencia afectan la producción.</span></div></div>
+                <div class="generation-item"><b>3</b><div><strong>Radiación y clima</strong><span>Ubicación, inclinación y condiciones climáticas influyen cada día.</span></div></div>
+              </div>
             </div>
           </div>
           ${footer}
