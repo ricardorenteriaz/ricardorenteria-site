@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="desktop.css?v=20260525-08" media="(min-width: 621px)" />
     <link rel="stylesheet" href="mobile.css?v=20260525-08" media="(max-width: 620px)" />
     <link rel="stylesheet" href="project-auth.css?v=20260525-01" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="project-locked">
     <section class="project-gate" id="project-gate" aria-labelledby="project-gate-title">
@@ -46,8 +47,8 @@
             <h1>Iniciar sesión</h1>
           </div>
           <label>
-            Usuario
-            <input id="login-user" type="text" autocomplete="username" required />
+            Correo
+            <input id="login-user" type="email" autocomplete="email" required />
           </label>
           <label>
             Contraseña

@@ -1,4 +1,13 @@
 const stages = ["Prospecto", "Calificado", "Propuesta", "Negociacion", "Ganado"];
+const SUPABASE_URL = "https://itpdqkumkgaossbfhqhp.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0cGRxa3Vta2dhb3NzYmZocWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NjkxOTEsImV4cCI6MjA5NTM0NTE5MX0.o17idXAkho5s8ekQwZX_tJD-12lfwyA_bEVwgEkMx40";
+const XOLTEC_ORGANIZATION_ID = "00000000-0000-4000-8000-000000000001";
+const supabaseClient =
+  window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
 const starterUsers = [
   {
     user: "ricardo",
@@ -249,21 +258,73 @@ setupSignaturePad();
 syncAuthView();
 render();
 recoverSavedBrowserData();
+restoreSupabaseSession();
 
-function login(event) {
+async function restoreSupabaseSession() {
+  if (!supabaseClient) return;
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data.session) return;
+
+  const profile = await loadSupabaseProfile(data.session.user.id);
+  if (!profile) return;
+
+  sessionStorage.setItem("ventas-crm-authenticated", "true");
+  sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(profileToLocalUser(profile)));
+  sessionStorage.setItem("ventas-crm-auth-provider", "supabase");
+  await loadSupabaseState();
+  syncAuthView();
+}
+
+async function login(event) {
   event.preventDefault();
   const user = document.querySelector("#login-user").value.trim();
   const password = document.querySelector("#login-password").value;
   const error = document.querySelector("#auth-error");
+
+  if (supabaseClient && user.includes("@")) {
+    error.textContent = "Validando acceso...";
+    const { data, error: authError } = await supabaseClient.auth.signInWithPassword({
+      email: user,
+      password,
+    });
+
+    if (authError || !data.user) {
+      error.textContent = authError ? authError.message : "No pude iniciar sesión en Supabase.";
+      return;
+    }
+
+    const profile = await loadSupabaseProfile(data.user.id);
+    if (!profile) {
+      await supabaseClient.auth.signOut();
+      error.textContent = "Tu usuario existe, pero falta el perfil del CRM.";
+      return;
+    }
+
+    const currentUser = profileToLocalUser(profile);
+    sessionStorage.setItem("ventas-crm-authenticated", "true");
+    sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(currentUser));
+    sessionStorage.setItem("ventas-crm-auth-provider", "supabase");
+    error.textContent = "";
+    event.target.reset();
+    await loadSupabaseState();
+    syncAuthView();
+    setView("quotes");
+    document.querySelector(".sidebar").classList.remove("menu-open");
+    return;
+  }
+
   const matchedUser = state.users.find((item) => item.user === user && item.password === password);
 
   if (!matchedUser) {
-    error.textContent = "Usuario o contraseña incorrectos.";
+    error.textContent = supabaseClient
+      ? "Usa tu correo de Supabase para entrar al laboratorio."
+      : "Usuario o contraseña incorrectos.";
     return;
   }
 
   sessionStorage.setItem("ventas-crm-authenticated", "true");
   sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(matchedUser));
+  sessionStorage.setItem("ventas-crm-auth-provider", "local");
   error.textContent = "";
   event.target.reset();
   syncAuthView();
@@ -271,9 +332,13 @@ function login(event) {
   document.querySelector(".sidebar").classList.remove("menu-open");
 }
 
-function logout() {
+async function logout() {
+  if (supabaseClient && sessionStorage.getItem("ventas-crm-auth-provider") === "supabase") {
+    await supabaseClient.auth.signOut();
+  }
   sessionStorage.removeItem("ventas-crm-authenticated");
   sessionStorage.removeItem("ventas-crm-current-user");
+  sessionStorage.removeItem("ventas-crm-auth-provider");
   document.querySelector("#search-input").value = "";
   syncAuthView();
 }
@@ -286,6 +351,150 @@ function populateStateSelects() {
       ...mexicanStates.map((state) => `<option value="${escapeHtml(state)}">${escapeHtml(state)}</option>`),
     ].join("");
   });
+}
+
+async function loadSupabaseProfile(userId) {
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, username, full_name, position, role, signature_url")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.warn("No pude cargar el perfil de Supabase.", error);
+    return null;
+  }
+
+  return data;
+}
+
+function profileToLocalUser(profile) {
+  return {
+    id: profile.id,
+    user: profile.username,
+    password: "",
+    name: profile.full_name,
+    position: profile.position,
+    signature: profile.signature_url || "",
+    superAdmin: profile.role === "super_admin",
+    role: profile.role,
+  };
+}
+
+async function loadSupabaseState() {
+  if (!supabaseClient) return;
+
+  const [productsResult, quotesResult, dealsResult, tasksResult, profilesResult] = await Promise.all([
+    supabaseClient
+      .from("products")
+      .select("id, legacy_id, name, price, default_quantity")
+      .eq("active", true)
+      .order("created_at", { ascending: true }),
+    supabaseClient
+      .from("quotes")
+      .select("*, quote_items(*)")
+      .order("created_at", { ascending: false }),
+    supabaseClient.from("deals").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("tasks").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("profiles").select("id, username, full_name, position, role, signature_url"),
+  ]);
+
+  const failed = [productsResult, quotesResult, dealsResult, tasksResult, profilesResult].find((result) => result.error);
+  if (failed) {
+    console.warn("No pude cargar datos de Supabase.", failed.error);
+    window.alert(`No pude cargar datos de Supabase: ${failed.error.message}`);
+    return;
+  }
+
+  state.products = productsResult.data.map(dbProductToLocal);
+  state.quoteClients = quotesResult.data.map(dbQuoteToLocal);
+  state.deals = dealsResult.data.map(dbDealToLocal);
+  state.tasks = tasksResult.data.map(dbTaskToLocal);
+  state.users = profilesResult.data.map(profileToLocalUser);
+  saveState();
+  renderQuoteProducts();
+  render();
+}
+
+function dbProductToLocal(product) {
+  return {
+    id: product.id,
+    legacyId: product.legacy_id,
+    name: product.name,
+    price: Number(product.price) || 0,
+    defaultQuantity: Number(product.default_quantity) || 1,
+  };
+}
+
+function dbQuoteToLocal(quote) {
+  const products = (quote.quote_items || [])
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .map((item) => ({
+      id: item.product_id || item.legacy_product_id || item.id,
+      name: item.name,
+      basePrice: Number(item.base_price) || Number(item.price) || 0,
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 1,
+      defaultQuantity: Number(item.default_quantity) || 1,
+      lineTotal: Number(item.line_total) || 0,
+      baseLineTotal: Number(item.base_line_total) || 0,
+      commissionAdjustmentPercent: Number(item.commission_adjustment_percent) || 0,
+      commissionAdjustmentAmount: Number(item.commission_adjustment_amount) || 0,
+      selected: true,
+    }));
+
+  return {
+    id: quote.id,
+    company: quote.company,
+    taxId: quote.tax_id,
+    contact: quote.contact,
+    email: quote.email,
+    phone: quote.phone,
+    notes: quote.notes,
+    referredBy: quote.referred_by,
+    fiscalAddress: quote.fiscal_address || {},
+    installationAddress: quote.installation_address || {},
+    products,
+    discountPercent: Number(quote.discount_percent) || 0,
+    commissionPercent: Number(quote.commission_percent) || 0,
+    commissionAppliedPercent: Number(quote.commission_applied_percent) || 0,
+    commissionFor: quote.commission_for,
+    commissionAmount: Number(quote.commission_amount) || 0,
+    companyCommissionAmount: Number(quote.company_commission_amount) || 0,
+    advancePercent: Number(quote.advance_percent) || 70,
+    totals: {
+      subtotal: Number(quote.subtotal) || 0,
+      discountAmount: Number(quote.discount_amount) || 0,
+      iva: Number(quote.iva) || 0,
+      total: Number(quote.total) || 0,
+    },
+    createdAt: quote.created_at,
+    updatedAt: quote.updated_at,
+    preparedByUser: quote.prepared_by,
+  };
+}
+
+function dbDealToLocal(deal) {
+  return {
+    id: deal.id,
+    account: deal.account,
+    contact: deal.contact,
+    name: deal.name,
+    value: Number(deal.value) || 0,
+    stage: deal.stage,
+    next: deal.next_step,
+    activity: deal.activity,
+  };
+}
+
+function dbTaskToLocal(task) {
+  return {
+    id: task.id,
+    title: task.title,
+    account: task.account,
+    date: task.due_date,
+    done: Boolean(task.done),
+  };
 }
 
 function backupPayload() {
@@ -872,7 +1081,7 @@ function calculateCommission(products) {
   };
 }
 
-function addProduct(event) {
+async function addProduct(event) {
   event.preventDefault();
   const product = {
     id: editingProductId || createId(),
@@ -880,6 +1089,13 @@ function addProduct(event) {
     price: Number(document.querySelector("#product-price").value) || 0,
     defaultQuantity: Math.max(Number(document.querySelector("#product-quantity").value) || 1, 1),
   };
+
+  if (isSupabaseSession()) {
+    const savedProduct = await saveSupabaseProduct(product, Boolean(editingProductId));
+    if (!savedProduct) return;
+    product.id = savedProduct.id;
+    product.legacyId = savedProduct.legacy_id;
+  }
 
   if (editingProductId) {
     state.products = state.products.map((item) => (item.id === editingProductId ? product : item));
@@ -891,6 +1107,29 @@ function addProduct(event) {
   resetProductForm();
   renderProductsCatalog();
   renderQuoteProducts();
+}
+
+async function saveSupabaseProduct(product, isEditing) {
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    legacy_id: product.legacyId || (isEditing ? null : product.id),
+    name: product.name,
+    price: product.price,
+    default_quantity: product.defaultQuantity,
+    active: true,
+  };
+
+  const query = isEditing
+    ? supabaseClient.from("products").update(payload).eq("id", product.id).select().single()
+    : supabaseClient.from("products").insert(payload).select().single();
+  const { data, error } = await query;
+
+  if (error) {
+    window.alert(`No pude guardar el producto en Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data;
 }
 
 function editProduct(productId) {
@@ -1165,18 +1404,28 @@ function loadSignatureToPad(dataUrl) {
   image.src = dataUrl;
 }
 
-function deleteProduct(productId) {
+async function deleteProduct(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
 
-  const password = window.prompt("Contraseña de administrador para eliminar productos:");
-  if (!isAdminPassword(password)) {
-    window.alert("Contraseña incorrecta.");
-    return;
+  if (!isSupabaseSession()) {
+    const password = window.prompt("Contraseña de administrador para eliminar productos:");
+    if (!isAdminPassword(password)) {
+      window.alert("Contraseña incorrecta.");
+      return;
+    }
   }
 
   const confirmed = window.confirm(`¿Eliminar el producto "${product.name}"?`);
   if (!confirmed) return;
+
+  if (isSupabaseSession()) {
+    const { error } = await supabaseClient.from("products").update({ active: false }).eq("id", productId);
+    if (error) {
+      window.alert(`No pude eliminar el producto en Supabase: ${error.message}`);
+      return;
+    }
+  }
 
   state.products = state.products.filter((item) => item.id !== productId);
   if (editingProductId === productId) {
@@ -1185,6 +1434,10 @@ function deleteProduct(productId) {
   saveState();
   renderProductsCatalog();
   renderQuoteProducts();
+}
+
+function isSupabaseSession() {
+  return Boolean(supabaseClient) && sessionStorage.getItem("ventas-crm-auth-provider") === "supabase";
 }
 
 function isAdminPassword(password) {
