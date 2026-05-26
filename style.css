@@ -631,17 +631,17 @@ footer {
 .clip-pay-button {
   width: min(296px, 100%);
   border: 0;
-  border-radius: 12px;
-  background: transparent;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
   justify-self: start;
-  padding: 0;
+  padding: 2px;
   transition: transform 160ms ease, filter 160ms ease;
 }
 
 .clip-pay-button:hover,
 .clip-pay-button:focus-visible {
-  filter: saturate(1.05) brightness(1.03);
+  filter: saturate(1.04) brightness(1.04);
   transform: translateY(-1px);
 }
 
