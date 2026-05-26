@@ -52,7 +52,7 @@ const disabledLinks = document.querySelectorAll(".disabled-link");
 const metaDescription = document.querySelector('meta[name="description"]');
 const paymentForm = document.querySelector("[data-payment-form]");
 const paymentFeedback = document.querySelector("[data-payment-feedback]");
-const clipCheckoutEndpoint = window.RR_CLIP_CHECKOUT_ENDPOINT || "";
+const clipCheckoutEndpoint = window.RR_CLIP_CHECKOUT_ENDPOINT || "https://itpdqkumkgaossbfhqhp.supabase.co/functions/v1/clip-checkout";
 let currentLanguage = localStorage.getItem("preferredLanguage") || "en";
 
 function applyLanguage(language) {
