@@ -509,8 +509,9 @@ function dbTaskToLocal(task) {
 function backupPayload() {
   return {
     app: "XOLTEC CRM",
-    version: "20260525-03",
+    version: "20260526-supabase",
     exportedAt: new Date().toISOString(),
+    source: isSupabaseSession() ? "supabase-cache" : "localStorage",
     data: state,
   };
 }
@@ -519,21 +520,25 @@ function encodedBackupPayload() {
   return btoa(unescape(encodeURIComponent(JSON.stringify(backupPayload()))));
 }
 
-function downloadCrmBackup() {
-  const payload = JSON.stringify(backupPayload(), null, 2);
+async function downloadCrmBackup() {
+  const backup = isSupabaseSession() ? await supabaseBackupPayload() : backupPayload();
+  if (!backup) return;
+  const payload = JSON.stringify(backup, null, 2);
   const blob = new Blob([payload], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `xoltec-crm-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = `xoltec-crm-${backup.source || "backup"}-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
 }
 
-function copyCrmBackup() {
-  const payload = encodedBackupPayload();
+async function copyCrmBackup() {
+  const backup = isSupabaseSession() ? await supabaseBackupPayload() : backupPayload();
+  if (!backup) return;
+  const payload = btoa(unescape(encodeURIComponent(JSON.stringify(backup))));
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard
       .writeText(payload)
@@ -542,6 +547,41 @@ function copyCrmBackup() {
   } else {
     window.prompt("Copia este texto para importarlo en el iPhone:", payload);
   }
+}
+
+async function supabaseBackupPayload() {
+  const [profilesResult, productsResult, quotesResult, quoteItemsResult, dealsResult, tasksResult] = await Promise.all([
+    supabaseClient.from("profiles").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("products").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("quotes").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("quote_items").select("*").order("sort_order", { ascending: true }),
+    supabaseClient.from("deals").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("tasks").select("*").order("created_at", { ascending: false }),
+  ]);
+  const failed = [profilesResult, productsResult, quotesResult, quoteItemsResult, dealsResult, tasksResult].find(
+    (result) => result.error,
+  );
+
+  if (failed) {
+    window.alert(`No pude generar el respaldo de Supabase: ${failed.error.message}`);
+    return null;
+  }
+
+  return {
+    app: "XOLTEC CRM",
+    version: "20260526-supabase",
+    exportedAt: new Date().toISOString(),
+    source: "supabase",
+    tables: {
+      profiles: profilesResult.data,
+      products: productsResult.data,
+      quotes: quotesResult.data,
+      quote_items: quoteItemsResult.data,
+      deals: dealsResult.data,
+      tasks: tasksResult.data,
+    },
+    data: state,
+  };
 }
 
 function exportCrmData() {
