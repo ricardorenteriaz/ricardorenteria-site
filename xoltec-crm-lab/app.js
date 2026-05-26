@@ -742,16 +742,19 @@ function renderTasks() {
     tasks.map(taskItem).join("") || emptyState("No hay tareas que coincidan");
 
   document.querySelectorAll("[data-task-id]").forEach((checkbox) => {
-    checkbox.addEventListener("change", () => {
+    checkbox.addEventListener("change", async () => {
       const task = state.tasks.find((item) => item.id === checkbox.dataset.taskId);
       task.done = checkbox.checked;
+      if (isSupabaseSession()) {
+        await saveSupabaseTask(task, true);
+      }
       saveState();
       render();
     });
   });
 }
 
-function addDeal(event) {
+async function addDeal(event) {
   event.preventDefault();
   const deal = {
     id: createId(),
@@ -763,14 +766,25 @@ function addDeal(event) {
     next: document.querySelector("#deal-next").value.trim(),
     activity: "Hoy",
   };
-  state.deals.unshift(deal);
-  state.tasks.unshift({
+  const task = {
     id: createId(),
     title: deal.next,
     account: deal.account,
     date: todayPlus(2),
     done: false,
-  });
+  };
+
+  if (isSupabaseSession()) {
+    const savedDeal = await saveSupabaseDeal(deal);
+    if (!savedDeal) return;
+    deal.id = savedDeal.id;
+
+    const savedTask = await saveSupabaseTask(task);
+    if (savedTask) task.id = savedTask.id;
+  }
+
+  state.deals.unshift(deal);
+  state.tasks.unshift(task);
   saveState();
   event.target.reset();
   closeDealModal();
@@ -778,19 +792,73 @@ function addDeal(event) {
   render();
 }
 
-function addTask(event) {
+async function addTask(event) {
   event.preventDefault();
-  state.tasks.unshift({
+  const task = {
     id: createId(),
     title: document.querySelector("#task-title").value.trim(),
     account: document.querySelector("#task-account").value.trim(),
     date: document.querySelector("#task-date").value,
     done: false,
-  });
+  };
+
+  if (isSupabaseSession()) {
+    const savedTask = await saveSupabaseTask(task);
+    if (!savedTask) return;
+    task.id = savedTask.id;
+  }
+
+  state.tasks.unshift(task);
   saveState();
   event.target.reset();
   document.querySelector("#task-date").value = todayPlus(1);
   render();
+}
+
+async function saveSupabaseDeal(deal) {
+  const currentUser = getCurrentUser();
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    owner_id: currentUser.id || null,
+    account: deal.account,
+    contact: deal.contact,
+    name: deal.name,
+    value: deal.value,
+    stage: deal.stage,
+    next_step: deal.next,
+    activity: deal.activity,
+  };
+
+  const { data, error } = await supabaseClient.from("deals").insert(payload).select().single();
+  if (error) {
+    window.alert(`No pude guardar la oportunidad en Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data;
+}
+
+async function saveSupabaseTask(task, isEditing = false) {
+  const currentUser = getCurrentUser();
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    owner_id: currentUser.id || null,
+    title: task.title,
+    account: task.account,
+    due_date: task.date,
+    done: task.done,
+  };
+
+  const query = isEditing
+    ? supabaseClient.from("tasks").update(payload).eq("id", task.id).select().single()
+    : supabaseClient.from("tasks").insert(payload).select().single();
+  const { data, error } = await query;
+  if (error) {
+    window.alert(`No pude guardar la tarea en Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data;
 }
 
 async function addQuoteClient(event) {
