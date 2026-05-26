@@ -74,7 +74,7 @@ Deno.serve(async (request) => {
         default: `${siteUrl}/?payment=cancelled&reference=${reference}`,
       },
       metadata: {
-        me_reference_id: reference,
+        external_reference: reference,
         customer_info: { name, email },
         source: "ricardorenteria.pro",
       },
