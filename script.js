@@ -18,7 +18,7 @@ const translations = {
     projectCrmEyebrow: "Product", projectCrmTitle: "Custom CRM Systems", projectCrmBody: "I build CRM systems around the client's real workflow, like a tailored suit: clean pipelines, useful dashboards, organized contacts, quote workflows, and tools that match how the business actually sells and follows up.",
     projectLandingEyebrow: "Product", projectLandingTitle: "Landing Pages", projectLandingBody: "I create focused landing pages for professionals and businesses that need a polished online presence, a clear offer, strong contact paths, and a design that feels credible from the first screen.",
     projectsEyebrow: "Live Projects", projectsTitle: "Private demos ready to show prospects.", xoltecEyebrow: "Protected CRM Demo", xoltecBody: "A custom CRM and quoting workflow for solar projects, with client records, product catalog, PDF quotes, internal commissions, commercial conditions, and mobile access.", openDemo: "Open private demo",
-    paymentsEyebrow: "Payments", paymentsTitle: "Card payments with Clip, ready when the project needs it.", clipEyebrow: "Clip Checkout", clipTitle: "Secure payment links for deposits and project milestones.", clipBody: "The payment flow will use Clip Redirected Checkout: a secure Clip-hosted page where clients can pay by credit or debit card, then return to this site after payment.", clipStep1: "Confirm amount and concept", clipStep2: "Generate secure Clip checkout link", clipStep3: "Client pays by card and returns to the site", requestPaymentLink: "Request payment link", clipStatus: "API integration pending Clip account verification and backend token setup.",
+    paymentsEyebrow: "Payments", paymentsTitle: "Card payments with Clip, ready when the project needs it.", clipEyebrow: "Clip Checkout", clipTitle: "Secure payment links for deposits and project milestones.", clipBody: "The payment flow will use Clip Redirected Checkout: a secure Clip-hosted page where clients can pay by credit or debit card, then return to this site after payment.", clipStep1: "Confirm amount and concept", clipStep2: "Generate secure Clip checkout link", clipStep3: "Client pays by card and returns to the site", requestPaymentLink: "Request payment link", paymentAmount: "Amount", paymentConcept: "Concept", paymentName: "Name", paymentEmail: "Email", paymentFeedback: "Enter the amount and concept to request a secure payment link.", paymentFallback: "I prepared the payment request in WhatsApp while the Clip API endpoint is activated.", paymentCreating: "Creating secure Clip payment link...", paymentError: "The payment link could not be created. Please contact me by WhatsApp.", clipStatus: "API integration pending Clip account verification and backend token setup.",
     skillsEyebrow: "Core Skills", skillsTitle: "Built for execution-heavy environments.", skillBusiness: "Business Operations", skillProcess: "Process Optimization", skillExecutive: "Executive Support", skillSystems: "IT Systems", skillCrm: "Custom CRM", skillLanding: "Landing Pages", skillTransformation: "Digital Transformation", skillProject: "Project Management", skillProblem: "Problem Solving",
     contactEyebrow: "Contact", contactTitle: "Let's connect.", contactBody: "Available for business operations, IT systems, custom CRM, landing page, executive support, and process improvement conversations.", formTitle: "Contact me", formName: "Name", formEmail: "Email", formMessage: "Message", formSubmit: "Send message", linkedinProfile: "LinkedIn Profile", businessSocials: "Business Socials", footerText: "© 2026 Ricardo Renteria. All rights reserved."
   },
@@ -41,7 +41,7 @@ const translations = {
     projectCrmEyebrow: "Producto", projectCrmTitle: "CRM a la medida", projectCrmBody: "Construyo CRM alrededor del flujo real del cliente, como un traje a la medida: pipelines claros, dashboards útiles, contactos organizados, cotizaciones y herramientas que se adaptan a cómo el negocio vende y da seguimiento.",
     projectLandingEyebrow: "Producto", projectLandingTitle: "Landing pages", projectLandingBody: "Creo landing pages enfocadas para profesionales y negocios que necesitan presencia digital pulida, una oferta clara, vías de contacto fuertes y un diseño que genere confianza desde el primer vistazo.",
     projectsEyebrow: "Proyectos en línea", projectsTitle: "Demos privadas listas para mostrar a prospectos.", xoltecEyebrow: "Demo CRM protegida", xoltecBody: "CRM y flujo de cotización a la medida para proyectos solares, con clientes, catálogo de productos, PDF de cotizaciones, comisiones internas, condiciones comerciales y acceso móvil.", openDemo: "Abrir demo privada",
-    paymentsEyebrow: "Pagos", paymentsTitle: "Pagos con tarjeta preparados para cuando el proyecto lo necesite.", clipEyebrow: "Checkout Clip", clipTitle: "Links seguros de pago para anticipos y avances de proyecto.", clipBody: "El flujo usará Checkout Redireccionado de Clip: una página segura alojada por Clip donde el cliente puede pagar con tarjeta de crédito o débito y regresar al sitio después del pago.", clipStep1: "Confirmar monto y concepto", clipStep2: "Generar link seguro de Checkout Clip", clipStep3: "El cliente paga con tarjeta y regresa al sitio", requestPaymentLink: "Solicitar link de pago", clipStatus: "Integración API pendiente de verificación de cuenta Clip y configuración segura del token.",
+    paymentsEyebrow: "Pagos", paymentsTitle: "Pagos con tarjeta preparados para cuando el proyecto lo necesite.", clipEyebrow: "Checkout Clip", clipTitle: "Links seguros de pago para anticipos y avances de proyecto.", clipBody: "El flujo usará Checkout Redireccionado de Clip: una página segura alojada por Clip donde el cliente puede pagar con tarjeta de crédito o débito y regresar al sitio después del pago.", clipStep1: "Confirmar monto y concepto", clipStep2: "Generar link seguro de Checkout Clip", clipStep3: "El cliente paga con tarjeta y regresa al sitio", requestPaymentLink: "Solicitar link de pago", paymentAmount: "Monto", paymentConcept: "Concepto", paymentName: "Nombre", paymentEmail: "Correo", paymentFeedback: "Ingresa el monto y concepto para solicitar un link seguro de pago.", paymentFallback: "Preparé la solicitud de pago por WhatsApp mientras se activa el endpoint de Clip.", paymentCreating: "Creando link seguro de pago con Clip...", paymentError: "No se pudo crear el link de pago. Contáctame por WhatsApp.", clipStatus: "Integración API pendiente de verificación de cuenta Clip y configuración segura del token.",
     skillsEyebrow: "Habilidades clave", skillsTitle: "Preparado para entornos donde la ejecución pesa.", skillBusiness: "Operaciones de negocio", skillProcess: "Optimización de procesos", skillExecutive: "Soporte ejecutivo", skillSystems: "Sistemas IT", skillCrm: "CRM a la medida", skillLanding: "Landing pages", skillTransformation: "Transformación digital", skillProject: "Gestión de proyectos", skillProblem: "Solución de problemas",
     contactEyebrow: "Contacto", contactTitle: "Conectemos.", contactBody: "Disponible para conversaciones sobre operaciones de negocio, sistemas IT, CRM a la medida, landing pages, soporte ejecutivo y mejora de procesos.", formTitle: "Contáctame", formName: "Nombre", formEmail: "Correo", formMessage: "Mensaje", formSubmit: "Enviar mensaje", linkedinProfile: "Perfil de LinkedIn", businessSocials: "Redes empresariales", footerText: "© 2026 Ricardo Rentería. Todos los derechos reservados."
   }
@@ -50,8 +50,13 @@ const translations = {
 const languageButtons = document.querySelectorAll(".language-button");
 const disabledLinks = document.querySelectorAll(".disabled-link");
 const metaDescription = document.querySelector('meta[name="description"]');
+const paymentForm = document.querySelector("[data-payment-form]");
+const paymentFeedback = document.querySelector("[data-payment-feedback]");
+const clipCheckoutEndpoint = window.RR_CLIP_CHECKOUT_ENDPOINT || "";
+let currentLanguage = localStorage.getItem("preferredLanguage") || "en";
 
 function applyLanguage(language) {
+  currentLanguage = language;
   const dictionary = translations[language] || translations.en;
   document.documentElement.lang = language;
   document.title = dictionary.documentTitle;
@@ -76,4 +81,53 @@ function applyLanguage(language) {
 
 languageButtons.forEach((button) => button.addEventListener("click", () => applyLanguage(button.dataset.lang)));
 disabledLinks.forEach((link) => link.addEventListener("click", (event) => event.preventDefault()));
+function setPaymentFeedback(key) {
+  if (!paymentFeedback) return;
+  const dictionary = translations[currentLanguage] || translations.en;
+  paymentFeedback.textContent = dictionary[key] || key;
+}
+
+function buildWhatsAppPaymentUrl(data) {
+  const message = [
+    "Hola Ricardo, quiero pagar con tarjeta por un proyecto.",
+    `Monto: $${data.amount} MXN`,
+    `Concepto: ${data.concept}`,
+    data.name ? `Nombre: ${data.name}` : "",
+    data.email ? `Correo: ${data.email}` : "",
+  ].filter(Boolean).join("\n");
+  return `https://wa.me/527294745365?text=${encodeURIComponent(message)}`;
+}
+
+async function handlePaymentRequest(event) {
+  event.preventDefault();
+  const formData = new FormData(paymentForm);
+  const data = {
+    amount: Number(formData.get("amount")),
+    concept: String(formData.get("concept") || "").trim(),
+    name: String(formData.get("name") || "").trim(),
+    email: String(formData.get("email") || "").trim(),
+  };
+
+  if (!clipCheckoutEndpoint) {
+    setPaymentFeedback("paymentFallback");
+    window.open(buildWhatsAppPaymentUrl(data), "_blank", "noopener");
+    return;
+  }
+
+  try {
+    setPaymentFeedback("paymentCreating");
+    const response = await fetch(clipCheckoutEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.paymentUrl) throw new Error(result.error || "Payment link error");
+    window.location.href = result.paymentUrl;
+  } catch (error) {
+    setPaymentFeedback("paymentError");
+  }
+}
+
+if (paymentForm) paymentForm.addEventListener("submit", handlePaymentRequest);
 applyLanguage(localStorage.getItem("preferredLanguage") || "en");
