@@ -1,7 +1,12 @@
 .project-locked > :not(.project-gate) {
-  filter: blur(12px);
+  display: none !important;
   pointer-events: none;
   user-select: none;
+}
+
+.project-locked {
+  min-height: 100vh;
+  overflow: hidden;
 }
 
 .project-gate {
@@ -11,6 +16,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
+  font-family: Inter, Arial, sans-serif;
   background:
     radial-gradient(circle at 18% 0%, rgba(235, 168, 58, 0.22), transparent 28rem),
     linear-gradient(135deg, rgba(32, 58, 73, 0.96), rgba(10, 18, 26, 0.98));
