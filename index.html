@@ -109,14 +109,14 @@
     <section class="section payments" id="payments">
       <div class="section-heading">
         <p class="eyebrow" data-i18n="paymentsEyebrow">Payments</p>
-        <h2 data-i18n="paymentsTitle">Card payments with Clip, ready when the project needs it.</h2>
+        <h2 data-i18n="paymentsTitle">Secure card payments for projects and professional services.</h2>
       </div>
       <div class="payment-card">
         <div class="payment-copy">
           <img class="clip-pay-mark" src="clip-pay-button.svg" alt="Pagar con Clip" loading="lazy" />
           <p class="eyebrow" data-i18n="clipEyebrow">Clip Checkout</p>
-          <h3 data-i18n="clipTitle">Secure payment links for deposits and project milestones.</h3>
-          <p data-i18n="clipBody">The payment flow will use Clip Redirected Checkout: a secure Clip-hosted page where clients can pay by credit or debit card, then return to this site after payment.</p>
+          <h3 data-i18n="clipTitle">Pay retainers, project deposits, and milestones with confidence.</h3>
+          <p data-i18n="clipBody">Use this section when a project is approved and you need a clean, secure way to pay by card through Clip.</p>
         </div>
         <div class="payment-steps">
           <div><strong>01</strong><span data-i18n="clipStep1">Confirm amount and concept</span></div>
@@ -125,12 +125,11 @@
         </div>
         <form class="payment-form" data-payment-form>
           <label><span data-i18n="paymentAmount">Amount</span><input type="number" name="amount" min="1" step="0.01" placeholder="1500.00" required /></label>
-          <label><span data-i18n="paymentConcept">Concept</span><input type="text" name="concept" maxlength="250" placeholder="CRM deposit" required /></label>
+          <label><span data-i18n="paymentConcept">Concept</span><input type="text" name="concept" maxlength="250" placeholder="Project deposit" required /></label>
           <label><span data-i18n="paymentName">Name</span><input type="text" name="name" autocomplete="name" /></label>
           <label><span data-i18n="paymentEmail">Email</span><input type="email" name="email" autocomplete="email" /></label>
           <button class="clip-pay-button" type="submit" aria-label="Request Clip payment link"><img src="clip-pay-button.svg" alt="Pagar con Clip" /></button>
-          <p class="payment-feedback" data-payment-feedback data-i18n="paymentFeedback">Enter the amount and concept to request a secure payment link.</p>
-          <span class="payment-status" data-i18n="clipStatus">API integration pending Clip account verification and backend token setup.</span>
+          <p class="payment-feedback" data-payment-feedback data-i18n="paymentFeedback">Add the agreed amount and concept. I will send you to a secure Clip checkout to complete the card payment.</p>
         </form>
       </div>
     </section>
