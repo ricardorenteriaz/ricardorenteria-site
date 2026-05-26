@@ -233,3 +233,14 @@ create policy "tasks write same organization"
 on public.tasks for all
 using (organization_id = public.current_organization_id())
 with check (organization_id = public.current_organization_id());
+
+grant usage on schema public to authenticated;
+grant select on public.organizations to authenticated;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.products to authenticated;
+grant select, insert, update, delete on public.quotes to authenticated;
+grant select, insert, update, delete on public.quote_items to authenticated;
+grant select, insert, update, delete on public.deals to authenticated;
+grant select, insert, update, delete on public.tasks to authenticated;
+grant execute on function public.current_organization_id() to authenticated;
+grant execute on function public.current_role() to authenticated;
