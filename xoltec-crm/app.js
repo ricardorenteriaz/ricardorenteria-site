@@ -1631,12 +1631,14 @@ function generateQuotePdf(quoteId) {
           .solar-map-kicker::before { content: ""; width: 18px; height: 3px; border-radius: 99px; background: #eba83a; }
           .solar-map-hero h1 { color: #203a49; font-size: 27px; line-height: 1.04; margin: 12px 0 8px; max-width: 520px; }
           .solar-map-hero p { color: #5f6672; font-size: 12px; line-height: 1.42; margin: 0; max-width: 560px; }
-          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; position: relative; margin-top: 8px; }
-          .solar-node { min-height: 112px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.82); padding: 13px; box-shadow: 0 10px 22px rgba(15,23,42,0.06); position: relative; }
-          .solar-node::after { content: ""; position: absolute; right: -15px; top: 50%; width: 14px; height: 2px; background: #18a058; }
-          .solar-node:nth-child(3)::after, .solar-node:nth-child(6)::after { display: none; }
+          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 42px 16px; position: relative; margin-top: 8px; }
+          .solar-arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+          .solar-node { min-height: 112px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.9); padding: 13px; box-shadow: 0 10px 22px rgba(15,23,42,0.06); position: relative; z-index: 1; }
           .solar-node-head { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
-          .solar-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; font-size: 18px; font-weight: 900; }
+          .solar-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; }
+          .solar-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+          .solar-icon .cfe-mark { color: #18a058; font-size: 13px; font-weight: 900; letter-spacing: -0.6px; }
           .solar-node h2 { color: #17202b; font-size: 13.5px; margin: 0; line-height: 1.15; }
           .solar-node p { color: #4b5563; font-size: 10.5px; line-height: 1.35; margin: 0; }
           .solar-node.accent .solar-icon { color: #18a058; background: #ecfdf5; border-color: #b7ebcf; }
@@ -1676,7 +1678,7 @@ function generateQuotePdf(quoteId) {
             .totals { width: 72%; }
             .annex-grid, .annex-stats { grid-template-columns: 1fr; }
             .solar-map-hero, .solar-flow, .solar-metrics, .generation-grid { grid-template-columns: 1fr; }
-            .solar-node::after { display: none; }
+            .solar-arrows { display: none; }
             .generation-item { border-right: 0; border-bottom: 1px solid #d7dde5; padding-bottom: 10px; }
             .generation-item:last-child { border-bottom: 0; }
             .bank-grid { grid-template-columns: 1fr; }
@@ -1876,28 +1878,40 @@ function generateQuotePdf(quoteId) {
               <img src="${logoUrl}" alt="XOLTEC" />
             </div>
             <div class="solar-flow">
+              <svg class="solar-arrows" viewBox="0 0 720 270" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <marker id="solar-arrow-head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#18a058"></path>
+                  </marker>
+                </defs>
+                <path d="M225 56 H252" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M468 56 H495" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M600 112 L115 174" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M600 112 L360 174" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M600 112 L600 174" marker-end="url(#solar-arrow-head)"></path>
+              </svg>
               <article class="solar-node">
-                <div class="solar-node-head"><span class="solar-icon">PV</span><h2>1. Paneles</h2></div>
+                <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("panel")}</span><h2>1. Paneles</h2></div>
                 <p>Capturan radiación solar y producen corriente continua para iniciar la generación.</p>
               </article>
               <article class="solar-node accent">
-                <div class="solar-node-head"><span class="solar-icon">CA</span><h2>2. Inversor</h2></div>
+                <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("inverter")}</span><h2>2. Inversor</h2></div>
                 <p>Convierte corriente continua en corriente alterna apta para equipos eléctricos.</p>
               </article>
               <article class="solar-node">
-                <div class="solar-node-head"><span class="solar-icon">H</span><h2>3. Consumo</h2></div>
+                <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("home")}</span><h2>3. Consumo</h2></div>
                 <p>La energía se usa en el hogar o negocio en tiempo real, reduciendo consumo de red.</p>
               </article>
               <article class="solar-node accent">
-                <div class="solar-node-head"><span class="solar-icon">B</span><h2>4. Baterías</h2></div>
+                <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("battery")}</span><h2>4. Baterías</h2></div>
                 <p>Almacenan energía para usarla cuando el proyecto lo requiere.</p>
               </article>
               <article class="solar-node">
-                <div class="solar-node-head"><span class="solar-icon">CFE</span><h2>5. Red CFE</h2></div>
+                <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("cfe")}</span><h2>5. Red CFE</h2></div>
                 <p>Los excedentes pueden inyectarse mediante medidor bidireccional.</p>
               </article>
               <article class="solar-node gold">
-                <div class="solar-node-head"><span class="solar-icon">M</span><h2>6. Monitoreo</h2></div>
+                <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("monitor")}</span><h2>6. Monitoreo</h2></div>
                 <p>El inversor registra producción y permite revisar diagnósticos o reportes.</p>
               </article>
             </div>
@@ -1991,6 +2005,23 @@ function pdfFooterIcon(type) {
     mail: '<svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>',
     web: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18M12 3c-3 3.5-3 14 0 18"/></svg>',
     pin: '<svg viewBox="0 0 24 24"><path d="M12 21s7-5.4 7-12a7 7 0 1 0-14 0c0 6.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/></svg>',
+  };
+  return icons[type] || "";
+}
+
+function solarMapIcon(type) {
+  const icons = {
+    panel:
+      '<svg viewBox="0 0 24 24"><path d="m4 8 14-3 2 9-14 3z"/><path d="M7 7.4 9 16M11.5 6.4l2 8.6M16 5.5l2 8.5M5.5 11.5l14-3M6.4 15l14-3"/></svg>',
+    inverter:
+      '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M7 14c2.6-5.3 4.6-5.3 7.2 0 1.2 2.5 2.2 2.5 3.8 0"/></svg>',
+    home:
+      '<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg>',
+    battery:
+      '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4"/><path d="M7 11h7"/></svg>',
+    cfe: '<span class="cfe-mark">CFE</span>',
+    monitor:
+      '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 12 17 9"/><path d="M8 16h8"/><circle cx="12" cy="12" r="1.5"/></svg>',
   };
   return icons[type] || "";
 }

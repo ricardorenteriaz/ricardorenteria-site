@@ -5,7 +5,14 @@ const gateForm = document.querySelector("#project-gate-form");
 const gatePassword = document.querySelector("#project-gate-password");
 const gateError = document.querySelector("#project-gate-error");
 
+function clearCrmSession() {
+  sessionStorage.removeItem("ventas-crm-authenticated");
+  sessionStorage.removeItem("ventas-crm-current-user");
+  sessionStorage.removeItem("ventas-crm-auth-provider");
+}
+
 function unlockProject() {
+  clearCrmSession();
   document.body.classList.remove("project-locked");
   document.body.classList.add("project-unlocked");
 }
