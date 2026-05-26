@@ -1,5 +1,5 @@
 const PROJECT_AUTH_KEY = "rrz-xoltec-crm-lab-access";
-const PROJECT_PASSWORD_HASH = "6a127ec91de4c01dfc74bf49b5209df8822f1663ac712131492d3a5f4585553d";
+const PROJECT_PASSWORD_HASH = "7efba5cb23594466d03e329c3c69646199377d4ed9fe9a5fc75abd9e663104ff";
 
 const gateForm = document.querySelector("#project-gate-form");
 const gatePassword = document.querySelector("#project-gate-password");
