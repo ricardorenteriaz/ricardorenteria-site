@@ -1,4 +1,3 @@
-const PROJECT_AUTH_KEY = "rrz-xoltec-crm-access";
 const PROJECT_PASSWORD_HASH = "a887f6ea0fecaf540544cd10a1b2cefb3a6a08c67a1e9eb0af6dca3f7c16ee05";
 
 const gateForm = document.querySelector("#project-gate-form");
@@ -18,9 +17,7 @@ async function sha256(value) {
     .join("");
 }
 
-if (sessionStorage.getItem(PROJECT_AUTH_KEY) === "ok") {
-  unlockProject();
-} else if (gatePassword) {
+if (gatePassword) {
   gatePassword.focus();
 }
 
@@ -29,7 +26,6 @@ if (gateForm) {
     event.preventDefault();
     const passwordHash = await sha256(gatePassword.value.trim());
     if (passwordHash === PROJECT_PASSWORD_HASH) {
-      sessionStorage.setItem(PROJECT_AUTH_KEY, "ok");
       unlockProject();
       return;
     }
