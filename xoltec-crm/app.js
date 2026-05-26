@@ -1,0 +1,1976 @@
+const stages = ["Prospecto", "Calificado", "Propuesta", "Negociacion", "Ganado"];
+const starterUsers = [
+  {
+    user: "ricardo",
+    password: "admin",
+    name: "RICARDO RENTERIA",
+    position: "SUPER ADMIN",
+    superAdmin: true,
+  },
+];
+
+const starterProductCatalog = [
+  {
+    id: "panel-longi-640",
+    name: "Panel solar marca SOL LONGI Mod 640 HIMO 6 NYTPE",
+    price: 4800,
+    defaultQuantity: 14,
+  },
+  {
+    id: "inversor-growatt-max-9000",
+    name: "Inversor GROWAT MAX 9,000 KW Mod TL",
+    price: 16000,
+    defaultQuantity: 1,
+  },
+  {
+    id: "kit-estructural-ajustable",
+    name: "KIT estructural Ajustable a 14 paneles solares",
+    price: 15500,
+    defaultQuantity: 1,
+  },
+  {
+    id: "cables-conectores-accesorios",
+    name: "Cables conectores, accesorios eléctricos",
+    price: 12350,
+    defaultQuantity: 1,
+  },
+  {
+    id: "tramites-gestorias",
+    name: "Tramites y Gestorías",
+    price: 5500,
+    defaultQuantity: 1,
+  },
+  {
+    id: "mano-obra",
+    name: "Mano de Obra",
+    price: 20500,
+    defaultQuantity: 1,
+  },
+];
+
+const mexicanStates = [
+  "Aguascalientes",
+  "Baja California",
+  "Baja California Sur",
+  "Campeche",
+  "Chiapas",
+  "Chihuahua",
+  "Ciudad de México",
+  "Coahuila",
+  "Colima",
+  "Durango",
+  "Estado de México",
+  "Guanajuato",
+  "Guerrero",
+  "Hidalgo",
+  "Jalisco",
+  "Michoacán",
+  "Morelos",
+  "Nayarit",
+  "Nuevo León",
+  "Oaxaca",
+  "Puebla",
+  "Querétaro",
+  "Quintana Roo",
+  "San Luis Potosí",
+  "Sinaloa",
+  "Sonora",
+  "Tabasco",
+  "Tamaulipas",
+  "Tlaxcala",
+  "Veracruz",
+  "Yucatán",
+  "Zacatecas",
+];
+
+const starterDeals = [
+  {
+    id: createId(),
+    account: "Norte Energia",
+    contact: "Laura Mendez",
+    name: "Implementacion CRM ventas B2B",
+    value: 42000,
+    stage: "Propuesta",
+    next: "Enviar ajuste de alcance",
+    activity: "Hoy",
+  },
+  {
+    id: createId(),
+    account: "Clinica Altura",
+    contact: "Diego Soto",
+    name: "Portal de seguimiento comercial",
+    value: 18500,
+    stage: "Calificado",
+    next: "Demo con direccion",
+    activity: "Ayer",
+  },
+  {
+    id: createId(),
+    account: "Grupo Madero",
+    contact: "Sofia Ruiz",
+    name: "Automatizacion de cotizaciones",
+    value: 63000,
+    stage: "Negociacion",
+    next: "Revisar contrato",
+    activity: "Hace 2 dias",
+  },
+  {
+    id: createId(),
+    account: "Viva Retail",
+    contact: "Marco Vidal",
+    name: "Capacitacion equipo ventas",
+    value: 12000,
+    stage: "Prospecto",
+    next: "Calificar presupuesto",
+    activity: "Hace 4 dias",
+  },
+  {
+    id: createId(),
+    account: "Arco Logistica",
+    contact: "Paola Herrera",
+    name: "Soporte anual premium",
+    value: 28500,
+    stage: "Ganado",
+    next: "Onboarding",
+    activity: "Hace 1 semana",
+  },
+];
+
+const starterTasks = [
+  {
+    id: createId(),
+    title: "Preparar propuesta para Norte Energia",
+    account: "Norte Energia",
+    date: todayPlus(1),
+    done: false,
+  },
+  {
+    id: createId(),
+    title: "Confirmar asistentes a demo",
+    account: "Clinica Altura",
+    date: todayPlus(2),
+    done: false,
+  },
+  {
+    id: createId(),
+    title: "Enviar minuta de negociacion",
+    account: "Grupo Madero",
+    date: todayPlus(0),
+    done: true,
+  },
+];
+
+const state = loadState();
+let editingQuoteId = null;
+let editingProductId = null;
+let editingUserName = null;
+let pricesUnlocked = false;
+let signatureDataUrl = "";
+
+const money = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+});
+
+const views = {
+  dashboard: document.querySelector("#dashboard-view"),
+  pipeline: document.querySelector("#pipeline-view"),
+  accounts: document.querySelector("#accounts-view"),
+  tasks: document.querySelector("#tasks-view"),
+  quotes: document.querySelector("#quotes-view"),
+  quoteHistory: document.querySelector("#quote-history-view"),
+  products: document.querySelector("#products-view"),
+  users: document.querySelector("#users-view"),
+};
+
+const titles = {
+  dashboard: "Dashboard",
+  pipeline: "Pipeline",
+  accounts: "Cuentas",
+  tasks: "Tareas",
+  quotes: "Cotizar",
+  quoteHistory: "Cotizaciones",
+  products: "Productos",
+  users: "Usuarios",
+};
+
+document.querySelectorAll(".nav-item").forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.view));
+});
+
+document.querySelectorAll("[data-view-shortcut]").forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.viewShortcut));
+});
+
+document.querySelector("#search-input").addEventListener("input", render);
+document.querySelector("#open-deal-modal").addEventListener("click", () => {
+  document.querySelector("#deal-modal").showModal();
+  document.querySelector("#deal-account").focus();
+});
+document.querySelector("#close-deal-modal").addEventListener("click", closeDealModal);
+document.querySelector("#cancel-deal").addEventListener("click", closeDealModal);
+document.querySelector("#deal-form").addEventListener("submit", addDeal);
+document.querySelector("#task-form").addEventListener("submit", addTask);
+document.querySelector("#quote-client-form").addEventListener("submit", addQuoteClient);
+document.querySelector("#quote-client-list").addEventListener("click", handleQuoteActionClick);
+document.querySelector("#quote-latest-list").addEventListener("click", handleQuoteActionClick);
+document.querySelector("#quote-cancel-edit").addEventListener("click", resetQuoteForm);
+document.querySelector("#unlock-prices").addEventListener("click", unlockQuotePrices);
+document.querySelector("#same-install-address").addEventListener("change", syncInstallAddress);
+document.querySelector("#quote-discount").addEventListener("input", renderQuoteProductTotals);
+document.querySelector("#quote-commission-percent").addEventListener("input", renderQuoteProductTotals);
+document.querySelector("#product-form").addEventListener("submit", addProduct);
+document.querySelector("#product-cancel-edit").addEventListener("click", resetProductForm);
+document.querySelector("#user-form").addEventListener("submit", addUser);
+document.querySelector("#user-cancel-edit").addEventListener("click", resetUserForm);
+document.querySelector("#clear-signature").addEventListener("click", clearSignaturePad);
+document.querySelector("#signature-upload").addEventListener("change", importSignature);
+document
+  .querySelectorAll(
+    "#quote-fiscal-street, #quote-fiscal-neighborhood, #quote-fiscal-city, #quote-fiscal-state, #quote-fiscal-zip",
+  )
+  .forEach((field) => field.addEventListener("input", syncInstallAddress));
+document.querySelector("#login-form").addEventListener("submit", login);
+document.querySelector("#logout-button").addEventListener("click", logout);
+document.querySelector("#mobile-menu-toggle").addEventListener("click", toggleMobileMenu);
+document.querySelector(".sidebar").addEventListener("click", closeMobileMenuFromBackdrop);
+document.querySelector("#download-backup-button").addEventListener("click", downloadCrmBackup);
+document.querySelector("#admin-download-backup").addEventListener("click", downloadCrmBackup);
+document.querySelector("#admin-copy-backup").addEventListener("click", copyCrmBackup);
+document.querySelector("#admin-import-backup-text").addEventListener("click", importCrmData);
+document.querySelector("#admin-import-backup-file").addEventListener("change", importCrmBackupFile);
+
+document.querySelector("#task-date").value = todayPlus(1);
+
+populateStateSelects();
+renderQuoteProducts();
+setupSignaturePad();
+syncAuthView();
+render();
+recoverSavedBrowserData();
+
+function login(event) {
+  event.preventDefault();
+  const user = document.querySelector("#login-user").value.trim();
+  const password = document.querySelector("#login-password").value;
+  const error = document.querySelector("#auth-error");
+  const matchedUser = state.users.find((item) => item.user === user && item.password === password);
+
+  if (!matchedUser) {
+    error.textContent = "Usuario o contraseña incorrectos.";
+    return;
+  }
+
+  sessionStorage.setItem("ventas-crm-authenticated", "true");
+  sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(matchedUser));
+  error.textContent = "";
+  event.target.reset();
+  syncAuthView();
+  setView("quotes");
+  document.querySelector(".sidebar").classList.remove("menu-open");
+}
+
+function logout() {
+  sessionStorage.removeItem("ventas-crm-authenticated");
+  sessionStorage.removeItem("ventas-crm-current-user");
+  document.querySelector("#search-input").value = "";
+  syncAuthView();
+}
+
+function populateStateSelects() {
+  ["#quote-fiscal-state", "#quote-install-state"].forEach((selector) => {
+    const select = document.querySelector(selector);
+    select.innerHTML = [
+      '<option value="">Selecciona estado</option>',
+      ...mexicanStates.map((state) => `<option value="${escapeHtml(state)}">${escapeHtml(state)}</option>`),
+    ].join("");
+  });
+}
+
+function backupPayload() {
+  return {
+    app: "XOLTEC CRM",
+    version: "20260525-03",
+    exportedAt: new Date().toISOString(),
+    data: state,
+  };
+}
+
+function encodedBackupPayload() {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(backupPayload()))));
+}
+
+function downloadCrmBackup() {
+  const payload = JSON.stringify(backupPayload(), null, 2);
+  const blob = new Blob([payload], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `xoltec-crm-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function copyCrmBackup() {
+  const payload = encodedBackupPayload();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(payload)
+      .then(() => window.alert("Datos copiados. En el iPhone toca Importar datos y pega este texto."))
+      .catch(() => window.prompt("Copia este texto para importarlo en el iPhone:", payload));
+  } else {
+    window.prompt("Copia este texto para importarlo en el iPhone:", payload);
+  }
+}
+
+function exportCrmData() {
+  copyCrmBackup();
+}
+
+function importCrmData() {
+  const payload = window.prompt("Pega aquí los datos exportados desde tu computadora:");
+  if (!payload) return;
+  try {
+    restoreCrmState(JSON.parse(decodeURIComponent(escape(atob(payload.trim())))));
+  } catch (error) {
+    window.alert("No pude importar esos datos. Revisa que hayas pegado el texto completo.");
+  }
+}
+
+function importCrmBackupFile(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      restoreCrmState(JSON.parse(String(reader.result)));
+    } catch (error) {
+      window.alert("No pude importar ese archivo. Revisa que sea un respaldo JSON del CRM.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function restoreCrmState(payload) {
+  const importedState = payload && payload.data ? payload.data : payload;
+  if (!importedState || typeof importedState !== "object") {
+    window.alert("El respaldo no contiene datos válidos.");
+    return;
+  }
+  localStorage.setItem("ventas-crm-state", JSON.stringify(importedState));
+  window.alert("Datos importados. La app se recargará con el respaldo restaurado.");
+  window.location.reload();
+}
+
+async function recoverSavedBrowserData() {
+  const hasUserData =
+    state.quoteClients.length > 0 ||
+    state.users.some((user) => !isRicardoUser(user)) ||
+    state.products.some((product) => !starterProductCatalog.some((starter) => starter.id === product.id));
+
+  if (hasUserData) return;
+
+  try {
+    const response = await fetch("recovered-ventas-crm-state.json", { cache: "no-store" });
+    if (!response.ok) return;
+    const recoveredState = await response.json();
+    if (!Array.isArray(recoveredState.quoteClients) || recoveredState.quoteClients.length === 0) return;
+
+    state.deals = recoveredState.deals || state.deals;
+    state.tasks = recoveredState.tasks || state.tasks;
+    state.quoteClients = recoveredState.quoteClients || [];
+    state.products = recoveredState.products || starterProductCatalog;
+    state.users = ensureStarterUsers(recoveredState.users || []);
+    saveState();
+    renderQuoteProducts();
+    syncAuthView();
+    render();
+  } catch (error) {
+    console.warn("No se pudo recuperar el respaldo local del CRM.", error);
+  }
+}
+
+function syncAuthView() {
+  const isAuthenticated = sessionStorage.getItem("ventas-crm-authenticated") === "true";
+  const currentUser = getCurrentUser();
+  document.querySelector("#auth-screen").classList.toggle("hidden", isAuthenticated);
+  document.querySelector("#app-shell").classList.toggle("locked", !isAuthenticated);
+  document.querySelectorAll(".super-admin-only").forEach((item) => {
+    item.classList.toggle("hidden", !isAuthenticated || !currentUser.superAdmin);
+  });
+
+  if (!isAuthenticated) {
+    document.querySelector("#login-user").focus();
+  } else if (!currentUser.superAdmin && views.users && views.users.classList.contains("active")) {
+    setView("quotes");
+  }
+}
+
+function setView(view) {
+  Object.values(views).forEach((section) => section.classList.remove("active"));
+  views[view].classList.add("active");
+  document.querySelector("#view-title").textContent = titles[view];
+  document.body.dataset.view = view;
+  document.querySelector(".search").classList.toggle("hidden", view === "users");
+  if (view === "users") document.querySelector("#search-input").value = "";
+  document.querySelectorAll(".nav-item").forEach((button) => {
+    button.classList.toggle("active", button.dataset.view === view);
+  });
+  document.querySelector(".sidebar").classList.remove("menu-open");
+}
+
+function toggleMobileMenu() {
+  document.querySelector(".sidebar").classList.toggle("menu-open");
+}
+
+function closeMobileMenuFromBackdrop(event) {
+  if (event.target.classList.contains("sidebar")) {
+    document.querySelector(".sidebar").classList.remove("menu-open");
+  }
+}
+
+function render() {
+  const deals = filteredDeals();
+  renderMetrics(deals);
+  renderCompactPipeline(deals);
+  renderPipelineBoard(deals);
+  renderAccounts(deals);
+  renderTasks();
+  renderQuoteClients();
+  renderProductsCatalog();
+  renderUsers();
+}
+
+function renderMetrics(deals) {
+  const openDeals = deals.filter((deal) => deal.stage !== "Ganado");
+  const wonDeals = deals.filter((deal) => deal.stage === "Ganado");
+  const forecast = openDeals.reduce((sum, deal) => sum + deal.value, 0);
+  const won = wonDeals.reduce((sum, deal) => sum + deal.value, 0);
+  const pendingTasks = state.tasks.filter((task) => !task.done).length;
+
+  document.querySelector("#metrics").innerHTML = [
+    metric("Pipeline abierto", money.format(forecast)),
+    metric("Ventas ganadas", money.format(won)),
+    metric("Oportunidades", String(deals.length)),
+    metric("Tareas pendientes", String(pendingTasks)),
+  ].join("");
+}
+
+function renderCompactPipeline(deals) {
+  const html = stages
+    .map((stage) => {
+      const total = deals
+        .filter((deal) => deal.stage === stage)
+        .reduce((sum, deal) => sum + deal.value, 0);
+      return `
+        <div class="deal-card">
+          <div class="deal-meta">
+            <span class="pill">${stageLabel(stage)}</span>
+            <span>${money.format(total)}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+  document.querySelector("#compact-pipeline").innerHTML = html || emptyState("Sin oportunidades");
+}
+
+function renderPipelineBoard(deals) {
+  document.querySelector("#pipeline-board").innerHTML = stages
+    .map((stage) => {
+      const stageDeals = deals.filter((deal) => deal.stage === stage);
+      const total = stageDeals.reduce((sum, deal) => sum + deal.value, 0);
+      return `
+        <section class="stage-column">
+          <div class="stage-header">
+            <span>${stageLabel(stage)}</span>
+            <span>${money.format(total)}</span>
+          </div>
+          ${stageDeals.map(dealCard).join("") || emptyState("Sin tratos")}
+        </section>
+      `;
+    })
+    .join("");
+}
+
+function renderAccounts(deals) {
+  document.querySelector("#accounts-table").innerHTML =
+    deals
+      .map(
+        (deal) => `
+          <tr>
+            <td><strong>${escapeHtml(deal.account)}</strong><br><span>${escapeHtml(deal.name)}</span></td>
+            <td>${escapeHtml(deal.contact)}</td>
+            <td><span class="pill">${stageLabel(deal.stage)}</span></td>
+            <td>${money.format(deal.value)}</td>
+            <td>${escapeHtml(deal.activity)}</td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="5">${emptyState("No hay cuentas que coincidan")}</td></tr>`;
+}
+
+function renderTasks() {
+  const tasks = filteredTasks().sort((a, b) => a.date.localeCompare(b.date));
+  const upcoming = tasks.filter((task) => !task.done).slice(0, 4);
+
+  document.querySelector("#upcoming-tasks").innerHTML =
+    upcoming.map(taskItem).join("") || emptyState("Sin tareas pendientes");
+  document.querySelector("#all-tasks").innerHTML =
+    tasks.map(taskItem).join("") || emptyState("No hay tareas que coincidan");
+
+  document.querySelectorAll("[data-task-id]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const task = state.tasks.find((item) => item.id === checkbox.dataset.taskId);
+      task.done = checkbox.checked;
+      saveState();
+      render();
+    });
+  });
+}
+
+function addDeal(event) {
+  event.preventDefault();
+  const deal = {
+    id: createId(),
+    account: document.querySelector("#deal-account").value.trim(),
+    contact: document.querySelector("#deal-contact").value.trim(),
+    name: document.querySelector("#deal-name").value.trim(),
+    value: Number(document.querySelector("#deal-value").value),
+    stage: document.querySelector("#deal-stage").value,
+    next: document.querySelector("#deal-next").value.trim(),
+    activity: "Hoy",
+  };
+  state.deals.unshift(deal);
+  state.tasks.unshift({
+    id: createId(),
+    title: deal.next,
+    account: deal.account,
+    date: todayPlus(2),
+    done: false,
+  });
+  saveState();
+  event.target.reset();
+  closeDealModal();
+  setView("pipeline");
+  render();
+}
+
+function addTask(event) {
+  event.preventDefault();
+  state.tasks.unshift({
+    id: createId(),
+    title: document.querySelector("#task-title").value.trim(),
+    account: document.querySelector("#task-account").value.trim(),
+    date: document.querySelector("#task-date").value,
+    done: false,
+  });
+  saveState();
+  event.target.reset();
+  document.querySelector("#task-date").value = todayPlus(1);
+  render();
+}
+
+function addQuoteClient(event) {
+  event.preventDefault();
+  const products = selectedQuoteProducts();
+  const totals = calculateQuoteTotals(products);
+  const commission = calculateCommission(products);
+
+  if (products.length === 0) {
+    document.querySelector("#quote-total-box").innerHTML = `
+      <div class="quote-warning">Selecciona al menos un producto para guardar la cotización.</div>
+    `;
+    return;
+  }
+
+  const existingQuote = state.quoteClients.find((quote) => quote.id === editingQuoteId);
+  const currentUser = getCurrentUser();
+  const quote = {
+    id: editingQuoteId || createId(),
+    company: document.querySelector("#quote-company").value.trim(),
+    taxId: document.querySelector("#quote-tax-id").value.trim(),
+    contact: document.querySelector("#quote-contact").value.trim(),
+    email: document.querySelector("#quote-email").value.trim(),
+    phone: document.querySelector("#quote-phone").value.trim(),
+    notes: document.querySelector("#quote-notes").value.trim(),
+    referredBy: document.querySelector("#quote-referred-by").value.trim(),
+    fiscalAddress: readAddress("fiscal"),
+    installationAddress: readAddress("install"),
+    products,
+    discountPercent: Number(document.querySelector("#quote-discount").value) || 0,
+    commissionPercent: Number(document.querySelector("#quote-commission-percent").value) || 0,
+    commissionFor: document.querySelector("#quote-commission-for").value.trim(),
+    commissionAmount: commission.amount,
+    commissionAppliedPercent: commission.appliedPercent,
+    companyCommissionAmount: commission.companyAmount,
+    advancePercent: Number(document.querySelector("#quote-advance-percent").value) || 0,
+    totals,
+    createdAt: (existingQuote && existingQuote.createdAt) || new Date().toISOString(),
+    preparedByUser: (existingQuote && existingQuote.preparedByUser) || currentUser.user,
+    updatedAt: editingQuoteId ? new Date().toISOString() : null,
+  };
+
+  if (editingQuoteId) {
+    state.quoteClients = state.quoteClients.map((item) => (item.id === editingQuoteId ? quote : item));
+  } else {
+    state.quoteClients.unshift(quote);
+  }
+
+  saveState();
+  resetQuoteForm();
+  render();
+}
+
+function renderQuoteClients() {
+  const clients = filteredQuoteClients();
+  const latestQuote = state.quoteClients[0] ? [state.quoteClients[0]] : [];
+  document.querySelector("#quote-latest-count").textContent = String(latestQuote.length);
+  document.querySelector("#quote-latest-list").innerHTML =
+    latestQuote.map(quoteClientCard).join("") || emptyState("Aún no hay cotizaciones capturadas");
+
+  document.querySelector("#quote-client-count").textContent = String(clients.length);
+  document.querySelector("#quote-client-list").innerHTML =
+    clients.map(quoteClientCard).join("") || emptyState("No hay cotizaciones guardadas");
+}
+
+function handleQuoteActionClick(event) {
+  const button = event.target.closest("button");
+  if (!button) return;
+  if (button.dataset.pdfQuote) generateQuotePdf(button.dataset.pdfQuote);
+  if (button.dataset.whatsappQuote) shareQuoteByWhatsApp(button.dataset.whatsappQuote);
+  if (button.dataset.emailQuote) shareQuoteByEmail(button.dataset.emailQuote);
+  if (button.dataset.editQuote) editQuote(button.dataset.editQuote);
+  if (button.dataset.deleteQuote) deleteQuote(button.dataset.deleteQuote);
+}
+
+function renderQuoteProducts() {
+  document.querySelector("#quote-products").innerHTML = state.products
+    .map(
+      (product) => `
+        <article class="quote-product-row">
+          <label class="checkbox-row">
+            <input class="quote-product-check" data-product-id="${product.id}" type="checkbox" />
+            <span>${escapeHtml(product.name)}</span>
+          </label>
+          <label class="quote-price-input">
+            Precio
+            <input class="quote-product-price-input" data-product-id="${product.id}" type="number" min="0" step="100" value="${product.price}" ${pricesUnlocked ? "" : "disabled"} />
+          </label>
+          <label class="quote-quantity">
+            Cant.
+            <input class="quote-product-quantity" data-product-id="${product.id}" type="number" min="1" step="1" value="${product.defaultQuantity}" />
+          </label>
+        </article>
+      `,
+    )
+    .join("");
+
+  document
+    .querySelectorAll(".quote-product-check, .quote-product-quantity, .quote-product-price-input")
+    .forEach((field) => {
+      field.addEventListener("input", renderQuoteProductTotals);
+      field.addEventListener("change", renderQuoteProductTotals);
+    });
+  document.querySelector("#unlock-prices").textContent = pricesUnlocked
+    ? "Precios desbloqueados"
+    : "Modificar precios";
+  renderQuoteProductTotals();
+}
+
+function resetQuoteForm() {
+  editingQuoteId = null;
+  document.querySelector("#quote-client-form").reset();
+  document.querySelector("#same-install-address").checked = false;
+  renderQuoteProducts();
+  updateQuoteFormMode();
+}
+
+function updateQuoteFormMode() {
+  const isEditing = Boolean(editingQuoteId);
+  document.querySelector("#quote-form-title").textContent = isEditing
+    ? "Editar cotización"
+    : "Nueva cotización";
+  document.querySelector("#quote-form-mode").textContent = isEditing
+    ? "Modificando"
+    : "Cliente + productos";
+  document.querySelector("#quote-save-button").textContent = isEditing
+    ? "Guardar cambios"
+    : "Guardar cotización";
+  document.querySelector("#quote-cancel-edit").classList.toggle("hidden", !isEditing);
+}
+
+function editQuote(quoteId) {
+  const quote = state.quoteClients.find((item) => item.id === quoteId);
+  if (!quote) return;
+
+  editingQuoteId = quote.id;
+  setView("quotes");
+  document.querySelector("#quote-company").value = quote.company || "";
+  document.querySelector("#quote-tax-id").value = quote.taxId || "";
+  document.querySelector("#quote-contact").value = quote.contact || "";
+  document.querySelector("#quote-email").value = quote.email || "";
+  document.querySelector("#quote-phone").value = quote.phone || "";
+  document.querySelector("#quote-notes").value = quote.notes || "";
+  document.querySelector("#quote-referred-by").value = quote.referredBy || "";
+  document.querySelector("#quote-discount").value = quote.discountPercent || 0;
+  document.querySelector("#quote-commission-percent").value = quote.commissionPercent || 0;
+  document.querySelector("#quote-commission-for").value = quote.commissionFor || "";
+  document.querySelector("#quote-advance-percent").value = quote.advancePercent || 70;
+  fillAddress("fiscal", quote.fiscalAddress);
+  fillAddress("install", quote.installationAddress);
+  document.querySelector("#same-install-address").checked = addressesMatch(
+    quote.fiscalAddress,
+    quote.installationAddress,
+  );
+  applyQuoteProducts(quote.products || []);
+  updateQuoteFormMode();
+  document.querySelector("#quote-client-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function applyQuoteProducts(products) {
+  const productMap = new Map(products.map((product) => [product.id, product]));
+  state.products.forEach((product) => {
+    const savedProduct = productMap.get(product.id);
+    const checkbox = document.querySelector(`.quote-product-check[data-product-id="${product.id}"]`);
+    const quantityField = document.querySelector(
+      `.quote-product-quantity[data-product-id="${product.id}"]`,
+    );
+    const priceField = document.querySelector(
+      `.quote-product-price-input[data-product-id="${product.id}"]`,
+    );
+    checkbox.checked = Boolean(savedProduct);
+    quantityField.value = (savedProduct && savedProduct.quantity) || product.defaultQuantity;
+    priceField.value = (savedProduct && (savedProduct.basePrice || savedProduct.price)) || product.price;
+  });
+  renderQuoteProductTotals();
+}
+
+function unlockQuotePrices() {
+  if (pricesUnlocked) return;
+  const password = window.prompt("Contraseña de administrador para modificar precios:");
+  if (!isAdminPassword(password)) {
+    window.alert("Contraseña incorrecta.");
+    return;
+  }
+  pricesUnlocked = true;
+  document.querySelectorAll(".quote-product-price-input").forEach((input) => {
+    input.disabled = false;
+  });
+  document.querySelector("#unlock-prices").textContent = "Precios desbloqueados";
+}
+
+function deleteQuote(quoteId) {
+  const quote = state.quoteClients.find((item) => item.id === quoteId);
+  if (!quote) return;
+  const quoteName = quote.company || quote.contact || "esta cotización";
+  const confirmed = window.confirm(`¿Eliminar la cotización de ${quoteName}? Esta acción no se puede deshacer.`);
+  if (!confirmed) return;
+
+  state.quoteClients = state.quoteClients.filter((item) => item.id !== quoteId);
+  if (editingQuoteId === quoteId) {
+    resetQuoteForm();
+  }
+  saveState();
+  render();
+}
+
+function renderQuoteProductTotals() {
+  const products = selectedQuoteProducts();
+  const totals = calculateQuoteTotals(products);
+  const commission = calculateCommission(products);
+  document.querySelector("#quote-total-box").innerHTML = `
+    <div><span>Subtotal</span><strong>${money.format(totals.subtotal)}</strong></div>
+    <div><span>Descuento</span><strong>${money.format(totals.discountAmount)}</strong></div>
+    <div><span>IVA</span><strong>${money.format(totals.iva)}</strong></div>
+    <div class="quote-grand-total"><span>Total</span><strong>${money.format(totals.total)}</strong></div>
+  `;
+  document.querySelector("#commission-result").innerHTML = `
+    <div>
+      <span>Cliente: se aplica ${commission.appliedPercent}% a cada concepto</span>
+      <strong>${money.format(commission.amount)}</strong>
+    </div>
+    <div>
+      <span>COMISIÓN QUE PAGA LA EMPRESA</span>
+      <strong>${money.format(commission.companyAmount)}</strong>
+    </div>
+  `;
+}
+
+function selectedQuoteProducts() {
+  return state.products
+    .map((product) => {
+      const checkbox = document.querySelector(`.quote-product-check[data-product-id="${product.id}"]`);
+      const quantityField = document.querySelector(
+        `.quote-product-quantity[data-product-id="${product.id}"]`,
+      );
+      const priceField = document.querySelector(
+        `.quote-product-price-input[data-product-id="${product.id}"]`,
+      );
+      const quantity = Math.max(Number(quantityField && quantityField.value) || product.defaultQuantity, 1);
+      const basePrice = Math.max(Number(priceField && priceField.value) || product.price, 0);
+      const commissionAdjustmentPercent = commissionPriceAdjustmentPercent();
+      const price = basePrice * (1 + commissionAdjustmentPercent / 100);
+      const baseLineTotal = quantity * basePrice;
+      const lineTotal = quantity * price;
+      return {
+        ...product,
+        basePrice,
+        price,
+        quantity,
+        baseLineTotal,
+        lineTotal,
+        commissionAdjustmentPercent,
+        commissionAdjustmentAmount: lineTotal - baseLineTotal,
+        selected: (checkbox && checkbox.checked) || false,
+      };
+    })
+    .filter((product) => product.selected);
+}
+
+function calculateQuoteTotals(products) {
+  const subtotal = products.reduce((sum, product) => sum + product.lineTotal, 0);
+  const discountPercent = Math.min(
+    Math.max(Number(document.querySelector("#quote-discount").value) || 0, 0),
+    100,
+  );
+  const discountAmount = subtotal * (discountPercent / 100);
+  const taxableSubtotal = subtotal - discountAmount;
+  const iva = taxableSubtotal * 0.16;
+  return {
+    subtotal,
+    discountAmount,
+    iva,
+    total: taxableSubtotal + iva,
+  };
+}
+
+function commissionPriceAdjustmentPercent() {
+  const percent = Math.min(
+    Math.max(Number(document.querySelector("#quote-commission-percent").value) || 0, 0),
+    100,
+  );
+  return percent / 2;
+}
+
+function calculateCommission(products) {
+  const percent = Math.min(
+    Math.max(Number(document.querySelector("#quote-commission-percent").value) || 0, 0),
+    100,
+  );
+  const appliedPercent = percent / 2;
+  const amount = products.reduce((sum, product) => sum + (product.commissionAdjustmentAmount || 0), 0);
+  return {
+    percent,
+    appliedPercent,
+    amount,
+    companyAmount: amount,
+  };
+}
+
+function addProduct(event) {
+  event.preventDefault();
+  const product = {
+    id: editingProductId || createId(),
+    name: document.querySelector("#product-name").value.trim(),
+    price: Number(document.querySelector("#product-price").value) || 0,
+    defaultQuantity: Math.max(Number(document.querySelector("#product-quantity").value) || 1, 1),
+  };
+
+  if (editingProductId) {
+    state.products = state.products.map((item) => (item.id === editingProductId ? product : item));
+  } else {
+    state.products.unshift(product);
+  }
+
+  saveState();
+  resetProductForm();
+  renderProductsCatalog();
+  renderQuoteProducts();
+}
+
+function editProduct(productId) {
+  const product = state.products.find((item) => item.id === productId);
+  if (!product) return;
+
+  editingProductId = product.id;
+  document.querySelector("#product-name").value = product.name || "";
+  document.querySelector("#product-price").value = product.price || 0;
+  document.querySelector("#product-quantity").value = product.defaultQuantity || 1;
+  updateProductFormMode();
+  document.querySelector("#product-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetProductForm() {
+  editingProductId = null;
+  document.querySelector("#product-form").reset();
+  document.querySelector("#product-quantity").value = 1;
+  updateProductFormMode();
+}
+
+function updateProductFormMode() {
+  const isEditing = Boolean(editingProductId);
+  document.querySelector("#product-form-title").textContent = isEditing
+    ? "Editar producto o concepto"
+    : "Nuevo producto o concepto";
+  document.querySelector("#product-form-mode").textContent = isEditing ? "Modificando" : "Catálogo";
+  document.querySelector("#product-save-button").textContent = isEditing ? "Guardar cambios" : "Agregar producto";
+  document.querySelector("#product-cancel-edit").classList.toggle("hidden", !isEditing);
+}
+
+function renderProductsCatalog() {
+  const products = filteredProducts();
+  document.querySelector("#product-count").textContent = String(products.length);
+  document.querySelector("#product-list").innerHTML =
+    products
+      .map(
+        (product) => `
+          <article class="product-card">
+            <strong>${escapeHtml(product.name)}</strong>
+            <div class="deal-meta">
+              <span>${money.format(product.price)}</span>
+              <span>Cantidad sugerida: ${product.defaultQuantity}</span>
+            </div>
+            <div class="quote-card-actions">
+              <button class="ghost-button" data-edit-product="${product.id}" type="button">Editar</button>
+              <button class="danger-button" data-delete-product="${product.id}" type="button">Eliminar</button>
+            </div>
+          </article>
+        `,
+      )
+      .join("") || emptyState("Aún no hay productos");
+
+  document.querySelectorAll("[data-edit-product]").forEach((button) => {
+    button.addEventListener("click", () => editProduct(button.dataset.editProduct));
+  });
+  document.querySelectorAll("[data-delete-product]").forEach((button) => {
+    button.addEventListener("click", () => deleteProduct(button.dataset.deleteProduct));
+  });
+}
+
+function addUser(event) {
+  event.preventDefault();
+  const user = document.querySelector("#new-user-login").value.trim();
+  const existingUser = state.users.find((item) => item.user === editingUserName);
+  const currentSignature = signatureDataUrl || readSignaturePad();
+
+  if (!editingUserName && state.users.some((item) => item.user === user)) {
+    window.alert("Ese usuario ya existe.");
+    return;
+  }
+
+  if (editingUserName && user !== editingUserName && state.users.some((item) => item.user === user)) {
+    window.alert("Ese usuario ya existe.");
+    return;
+  }
+
+  const updatedUser = {
+    user,
+    password: document.querySelector("#new-user-password").value,
+    name: document.querySelector("#new-user-name").value.trim().toUpperCase(),
+    position: document.querySelector("#new-user-position").value.trim().toUpperCase(),
+    signature: currentSignature,
+    superAdmin: isRicardoUser({ user, name: document.querySelector("#new-user-name").value.trim() }),
+  };
+
+  if (editingUserName) {
+    state.users = state.users.map((item) => (item.user === editingUserName ? updatedUser : item));
+    const currentUser = getCurrentUser();
+    if (currentUser.user === editingUserName) {
+      sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(updatedUser));
+    }
+  } else {
+    state.users.push(updatedUser);
+  }
+
+  saveState();
+  resetUserForm();
+  renderUsers();
+  syncAuthView();
+}
+
+function renderUsers() {
+  const list = document.querySelector("#user-list");
+  if (!list) return;
+
+  const users = filteredUsers();
+  document.querySelector("#user-count").textContent = String(users.length);
+  list.innerHTML =
+    users
+      .map(
+        (user) => `
+          <article class="product-card">
+            <strong>${escapeHtml(user.name)}</strong>
+            <div class="deal-meta">
+              <span>${escapeHtml(user.user)}</span>
+              <span>${escapeHtml(user.position || user.role)}</span>
+              ${user.superAdmin ? "<span>Super admin</span>" : ""}
+            </div>
+            <div class="quote-card-actions">
+              <button class="ghost-button" data-edit-user="${user.user}" type="button">Editar</button>
+              ${
+                user.superAdmin
+                  ? ""
+                  : `<button class="danger-button" data-delete-user="${user.user}" type="button">Eliminar</button>`
+              }
+            </div>
+          </article>
+        `,
+      )
+      .join("") || emptyState("Aún no hay usuarios");
+
+  document.querySelectorAll("[data-edit-user]").forEach((button) => {
+    button.addEventListener("click", () => editUser(button.dataset.editUser));
+  });
+  document.querySelectorAll("[data-delete-user]").forEach((button) => {
+    button.addEventListener("click", () => deleteUser(button.dataset.deleteUser));
+  });
+}
+
+function editUser(userName) {
+  const user = state.users.find((item) => item.user === userName);
+  if (!user) return;
+
+  editingUserName = user.user;
+  document.querySelector("#new-user-login").value = user.user;
+  document.querySelector("#new-user-password").value = user.password;
+  document.querySelector("#new-user-name").value = user.name;
+  document.querySelector("#new-user-position").value = user.position || user.role || "";
+  loadSignatureToPad(user.signature || "");
+  updateUserFormMode();
+  document.querySelector("#user-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetUserForm() {
+  editingUserName = null;
+  document.querySelector("#user-form").reset();
+  clearSignaturePad();
+  updateUserFormMode();
+}
+
+function updateUserFormMode() {
+  const isEditing = Boolean(editingUserName);
+  document.querySelector("#user-form-title").textContent = isEditing ? "Editar usuario" : "Nuevo usuario";
+  document.querySelector("#user-form-mode").textContent = isEditing ? "Modificando" : "Agregar usuario";
+  document.querySelector("#user-save-button").textContent = isEditing ? "Guardar cambios" : "Agregar usuario";
+  document.querySelector("#user-cancel-edit").classList.toggle("hidden", !isEditing);
+}
+
+function deleteUser(userName) {
+  const user = state.users.find((item) => item.user === userName);
+  if (!user || user.superAdmin) return;
+
+  const confirmed = window.confirm(`¿Eliminar el usuario ${user.user}?`);
+  if (!confirmed) return;
+
+  state.users = state.users.filter((item) => item.user !== userName);
+  if (editingUserName === userName) {
+    resetUserForm();
+  }
+  saveState();
+  renderUsers();
+}
+
+function setupSignaturePad() {
+  const canvas = document.querySelector("#signature-pad");
+  const context = canvas.getContext("2d");
+  let drawing = false;
+
+  context.lineWidth = 2.4;
+  context.lineCap = "round";
+  context.strokeStyle = "#17202b";
+
+  const point = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const source = (event.touches && event.touches[0]) || event;
+    return {
+      x: ((source.clientX - rect.left) / rect.width) * canvas.width,
+      y: ((source.clientY - rect.top) / rect.height) * canvas.height,
+    };
+  };
+
+  const start = (event) => {
+    event.preventDefault();
+    drawing = true;
+    const { x, y } = point(event);
+    context.beginPath();
+    context.moveTo(x, y);
+  };
+
+  const move = (event) => {
+    if (!drawing) return;
+    event.preventDefault();
+    const { x, y } = point(event);
+    context.lineTo(x, y);
+    context.stroke();
+    signatureDataUrl = canvas.toDataURL("image/png");
+  };
+
+  const stop = () => {
+    drawing = false;
+    signatureDataUrl = canvas.toDataURL("image/png");
+  };
+
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", stop);
+  canvas.addEventListener("touchstart", start);
+  canvas.addEventListener("touchmove", move);
+  window.addEventListener("touchend", stop);
+}
+
+function clearSignaturePad() {
+  const canvas = document.querySelector("#signature-pad");
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  signatureDataUrl = "";
+  document.querySelector("#signature-upload").value = "";
+}
+
+function readSignaturePad() {
+  const canvas = document.querySelector("#signature-pad");
+  const context = canvas.getContext("2d");
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const hasInk = pixels.some((value, index) => index % 4 === 3 && value !== 0);
+  return hasInk ? canvas.toDataURL("image/png") : "";
+}
+
+function importSignature(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => loadSignatureToPad(String(reader.result || ""));
+  reader.readAsDataURL(file);
+}
+
+function loadSignatureToPad(dataUrl) {
+  clearSignaturePad();
+  if (!dataUrl) return;
+  const canvas = document.querySelector("#signature-pad");
+  const context = canvas.getContext("2d");
+  const image = new Image();
+  image.onload = () => {
+    const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+    const width = image.width * scale;
+    const height = image.height * scale;
+    const x = (canvas.width - width) / 2;
+    const y = (canvas.height - height) / 2;
+    context.drawImage(image, x, y, width, height);
+    signatureDataUrl = dataUrl;
+  };
+  image.src = dataUrl;
+}
+
+function deleteProduct(productId) {
+  const product = state.products.find((item) => item.id === productId);
+  if (!product) return;
+
+  const password = window.prompt("Contraseña de administrador para eliminar productos:");
+  if (!isAdminPassword(password)) {
+    window.alert("Contraseña incorrecta.");
+    return;
+  }
+
+  const confirmed = window.confirm(`¿Eliminar el producto "${product.name}"?`);
+  if (!confirmed) return;
+
+  state.products = state.products.filter((item) => item.id !== productId);
+  if (editingProductId === productId) {
+    resetProductForm();
+  }
+  saveState();
+  renderProductsCatalog();
+  renderQuoteProducts();
+}
+
+function isAdminPassword(password) {
+  return state.users.some((user) => user.superAdmin && user.password === password);
+}
+
+function getCurrentUser() {
+  try {
+    const sessionUser = JSON.parse(sessionStorage.getItem("ventas-crm-current-user"));
+    if (!sessionUser) return state.users[0];
+    return state.users.find((user) => user.user === sessionUser.user) || state.users[0];
+  } catch {
+    return state.users[0];
+  }
+}
+
+function syncInstallAddress() {
+  if (!document.querySelector("#same-install-address").checked) return;
+  ["street", "neighborhood", "city", "state", "zip"].forEach((field) => {
+    document.querySelector(`#quote-install-${field}`).value = document.querySelector(
+      `#quote-fiscal-${field}`,
+    ).value;
+  });
+}
+
+function readAddress(type) {
+  return {
+    street: document.querySelector(`#quote-${type}-street`).value.trim(),
+    neighborhood: document.querySelector(`#quote-${type}-neighborhood`).value.trim(),
+    city: document.querySelector(`#quote-${type}-city`).value.trim(),
+    state: document.querySelector(`#quote-${type}-state`).value.trim(),
+    zip: document.querySelector(`#quote-${type}-zip`).value.trim(),
+  };
+}
+
+function fillAddress(type, address = {}) {
+  ["street", "neighborhood", "city", "state", "zip"].forEach((field) => {
+    document.querySelector(`#quote-${type}-${field}`).value = (address && address[field]) || "";
+  });
+}
+
+function addressesMatch(first = {}, second = {}) {
+  return ["street", "neighborhood", "city", "state", "zip"].every(
+    (field) => ((first && first[field]) || "") === ((second && second[field]) || ""),
+  );
+}
+
+function closeDealModal() {
+  document.querySelector("#deal-modal").close();
+}
+
+function filteredDeals() {
+  const query = searchQuery();
+  if (!query) return state.deals;
+  return state.deals.filter((deal) =>
+    matchesSearch([deal.account, deal.contact, deal.name, deal.stage, deal.next].join(" "), query),
+  );
+}
+
+function filteredTasks() {
+  const query = searchQuery();
+  if (!query) return state.tasks;
+  return state.tasks.filter((task) =>
+    matchesSearch([task.title, task.account].join(" "), query),
+  );
+}
+
+function filteredQuoteClients() {
+  const query = searchQuery();
+  if (!query) return state.quoteClients;
+  return state.quoteClients.filter((client) => matchesSearch(quoteSearchText(client), query));
+}
+
+function filteredProducts() {
+  const query = searchQuery();
+  if (!query) return state.products;
+  return state.products.filter((product) =>
+    matchesSearch([product.name, product.price, product.defaultQuantity].join(" "), query),
+  );
+}
+
+function filteredUsers() {
+  return state.users;
+}
+
+function searchQuery() {
+  return normalizeSearchText(document.querySelector("#search-input").value);
+}
+
+function matchesSearch(searchableText, query) {
+  const haystack = normalizeSearchText(searchableText);
+  const terms = query.split(" ").filter(Boolean);
+  return terms.every((term) => haystack.includes(term));
+}
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function quoteSearchText(client) {
+  const fiscalAddress = formatAddress(client.fiscalAddress, client.address);
+  const installationAddress = formatAddress(client.installationAddress);
+  const productText = (client.products || [])
+    .map((product) => [product.name, product.quantity, product.price, product.total].join(" "))
+    .join(" ");
+  const preparedBy = state.users.find((user) => user.user === client.preparedByUser);
+  return [
+    client.company,
+    client.taxId,
+    client.contact,
+    client.email,
+    client.phone,
+    client.referredBy,
+    client.notes,
+    fiscalAddress,
+    installationAddress,
+    productText,
+    client.discountPercent,
+    client.commissionPercent,
+    client.commissionAppliedPercent,
+    client.commissionFor,
+    client.advancePercent,
+    client.totals && client.totals.subtotal,
+    client.totals && client.totals.discountAmount,
+    client.totals && client.totals.iva,
+    client.totals && client.totals.total,
+    client.createdAt ? formatDate(client.createdAt.slice(0, 10)) : "",
+    client.preparedByUser,
+    preparedBy && preparedBy.name,
+    preparedBy && preparedBy.position,
+  ].join(" ");
+}
+
+function dealCard(deal) {
+  return `
+    <article class="deal-card">
+      <strong>${escapeHtml(deal.name)}</strong>
+      <p>${escapeHtml(deal.account)} · ${escapeHtml(deal.contact)}</p>
+      <div class="deal-meta">
+        <span class="pill">${money.format(deal.value)}</span>
+        <span>${escapeHtml(deal.next)}</span>
+      </div>
+    </article>
+  `;
+}
+
+function taskItem(task) {
+  return `
+    <article class="task-item ${task.done ? "done" : ""}">
+      <div class="task-title">
+        <input data-task-id="${task.id}" type="checkbox" ${task.done ? "checked" : ""} aria-label="Completar tarea" />
+        <div>
+          <strong>${escapeHtml(task.title)}</strong>
+          <div class="task-meta">
+            <span>${escapeHtml(task.account)}</span>
+            <span>${formatDate(task.date)}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function quoteClientCard(client) {
+  const products = client.products || [];
+  const fiscalAddress = formatAddress(client.fiscalAddress, client.address);
+  const installationAddress = formatAddress(client.installationAddress);
+  const total = (client.totals && client.totals.total) || 0;
+  const whatsappUrl = quoteWhatsAppUrl(client);
+  const emailUrl = quoteEmailUrl(client);
+  return `
+    <article class="quote-client-card">
+      <div class="quote-card-header">
+        <strong>${escapeHtml(client.company || client.contact)}</strong>
+        <span>${money.format(total)}</span>
+      </div>
+      <div class="quote-card-details">
+        ${quoteDetailRow("Empresa", client.company || "Opcional")}
+        ${quoteDetailRow("Contacto", client.contact)}
+        ${quoteDetailRow("Teléfono", client.phone)}
+        ${quoteDetailRow("Correo", client.email)}
+        ${quoteDetailRow("RFC", client.taxId || "Pendiente")}
+        ${quoteDetailRow("Referido por", client.referredBy || "Sin referido")}
+        ${quoteDetailRow("Fecha", formatDate(client.createdAt.slice(0, 10)))}
+        ${quoteDetailRow("Domicilio fiscal", fiscalAddress)}
+        ${quoteDetailRow("Instalación", installationAddress || fiscalAddress)}
+        ${client.notes ? quoteDetailRow("Observaciones:", client.notes) : ""}
+      </div>
+      <div class="quote-card-products">
+        ${products.map((product) => `<span>${escapeHtml(product.name)} x ${product.quantity}</span>`).join("")}
+      </div>
+      <div class="quote-card-total">
+        <span>Descuento ${client.discountPercent || 0}%</span>
+        <strong>${money.format(total)}</strong>
+      </div>
+      <div class="quote-internal-note">
+        Comisión total ${client.commissionPercent || 0}%:
+        cliente absorbe ${client.commissionAppliedPercent || 0}% (${money.format(client.commissionAmount || 0)}),
+        empresa absorbe ${client.commissionAppliedPercent || 0}% (${money.format(client.companyCommissionAmount || client.commissionAmount || 0)})
+        ${client.commissionFor ? `para ${escapeHtml(client.commissionFor)}` : ""}
+      </div>
+      <div class="quote-card-actions">
+        <button class="primary-button app-action-button" data-pdf-quote="${client.id}" type="button">${appIcon("pdf")}Generar PDF</button>
+        <a class="whatsapp-button app-action-button" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener">${appIcon("whatsapp")}Mandar WhatsApp</a>
+        ${
+          emailUrl
+            ? `<a class="email-button app-action-button" href="${escapeHtml(emailUrl)}">${appIcon("mail")}Mandar correo</a>`
+            : `<button class="email-button app-action-button" data-email-quote="${client.id}" type="button">${appIcon("mail")}Mandar correo</button>`
+        }
+        <button class="ghost-button" data-edit-quote="${client.id}" type="button">Editar</button>
+        <button class="danger-button" data-delete-quote="${client.id}" type="button">Eliminar</button>
+      </div>
+    </article>
+  `;
+}
+
+function quoteDetailRow(label, value) {
+  return `
+    <div class="quote-detail-row">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value || "-")}</strong>
+    </div>
+  `;
+}
+
+function quoteWhatsAppUrl(quote) {
+  const phone = normalizePhoneForWhatsApp(quote.phone);
+  const message = `${quoteShareMessage(quote, "whatsapp")}\n\nTe comparto la cotización en PDF por separado.`;
+  return phone
+    ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
+    : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+}
+
+function quoteEmailUrl(quote) {
+  if (!quote.email) return "";
+  const subject = `Cotización XOLTEC - ${quote.company || quote.contact}`;
+  const body = `${quoteShareMessage(quote, "email")}\n\nTe comparto la cotización en PDF por separado.`;
+  return `mailto:${quote.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function shareQuoteByWhatsApp(quoteId) {
+  const quote = state.quoteClients.find((item) => item.id === quoteId);
+  if (!quote) return;
+  window.location.href = quoteWhatsAppUrl(quote);
+}
+
+function shareQuoteByEmail(quoteId) {
+  const quote = state.quoteClients.find((item) => item.id === quoteId);
+  if (!quote) return;
+  if (!quote.email) {
+    window.alert("Esta cotización no tiene correo capturado. Agrégalo para poder preparar el envío.");
+    return;
+  }
+  const emailUrl = quoteEmailUrl(quote);
+  window.location.href = emailUrl;
+}
+
+function quoteShareMessage(quote, channel) {
+  const products = (quote.products || [])
+    .map((product) => `- ${product.name} x ${product.quantity}`)
+    .join("\n");
+  const intro = channel === "email" ? "Hola," : `Hola ${quote.contact || ""},`.trim();
+  return [
+    intro,
+    "",
+    "Te compartimos tu cotización de XOLTEC Soluciones Solares.",
+    "",
+    `Cliente: ${quote.company || quote.contact}`,
+    `Total: ${money.format((quote.totals && quote.totals.total) || 0)}`,
+    products ? `Productos:\n${products}` : "",
+    "",
+    "La cotización tiene una vigencia de 8 días naturales a partir de la fecha de expedición.",
+    "",
+    "Para cualquier duda puedes responder este mensaje.",
+    "",
+    "XOLTEC",
+    "722 518 5448",
+    "hola@xoltec.mx",
+    "xoltec.mx",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function normalizePhoneForWhatsApp(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 10) return `52${digits}`;
+  return digits;
+}
+
+function isLikelyIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function appIcon(type) {
+  const icons = {
+    pdf: `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5"/><path d="M8 15h8M8 18h5"/></svg>`,
+    whatsapp: `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7.2 20.3 3 21l.8-4A8.8 8.8 0 1 1 7.2 20.3z"/><path d="M8.8 8.4c.2-.5.4-.5.7-.5h.6c.2 0 .4.1.5.4l.8 1.9c.1.3 0 .5-.2.7l-.5.6c.8 1.4 1.9 2.4 3.4 3.1l.6-.7c.2-.2.5-.3.8-.2l1.8.9c.3.1.4.3.4.6 0 .8-.6 1.7-1.5 1.8-2.5.3-7.6-2.7-8.4-6.8-.2-.8.5-1.5 1-1.8z"/></svg>`,
+    mail: `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>`,
+  };
+  return `<span class="button-icon">${icons[type] || ""}</span>`;
+}
+
+function generateQuotePdf(quoteId) {
+  const quote = state.quoteClients.find((item) => item.id === quoteId);
+  if (!quote) return;
+  const currentUser = getCurrentUser();
+  const preparedBy = state.users.find((user) => user.user === quote.preparedByUser) || currentUser;
+
+  const fiscalAddress = formatAddress(quote.fiscalAddress, quote.address);
+  const installationAddress = formatAddress(quote.installationAddress) || fiscalAddress;
+  const subtotal = (quote.totals && quote.totals.subtotal) || 0;
+  const discountAmount = (quote.totals && quote.totals.discountAmount) || 0;
+  const iva = (quote.totals && quote.totals.iva) || 0;
+  const total = (quote.totals && quote.totals.total) || 0;
+  const advancePercent = quote.advancePercent || 70;
+  const balancePercent = Math.max(100 - advancePercent, 0);
+  const quoteDate = quote.createdAt ? new Date(quote.createdAt) : new Date();
+  const userSignature = preparedBy.signature
+    ? `<img class="signature-image" src="${preparedBy.signature}" alt="Firma de ${escapeHtml(preparedBy.name)}" />`
+    : "";
+  const rows = (quote.products || [])
+    .map(
+      (product) => `
+        <tr>
+          <td>${escapeHtml(product.name)}</td>
+          <td>${product.quantity}</td>
+          <td>${money.format(product.price)}</td>
+          <td>${money.format(product.lineTotal)}</td>
+        </tr>
+      `,
+    )
+    .join("");
+  const footer = quotePdfFooter();
+  const logoUrl = new URL("assets/xoltec-logo.png", window.location.href).href;
+
+  const printable = window.open("", "_blank");
+  if (!printable) {
+    window.alert("El navegador bloqueó la ventana del PDF. Permite ventanas emergentes para generarlo.");
+    return;
+  }
+
+  printable.document.write(`
+    <!doctype html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="format-detection" content="telephone=no, email=no, address=no" />
+        <title>Cotización XOLTEC</title>
+        <style>
+          @page { size: letter portrait; margin: 0; }
+          * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+          body { margin: 0; color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
+          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.78in; position: relative; overflow: hidden; }
+          .watermark { position: absolute; left: 1.35in; right: 1.35in; top: 4.15in; height: 3.4in; background: url("${logoUrl}") center / contain no-repeat; opacity: 0.16; z-index: 0; pointer-events: none; }
+          .watermark.soft { top: 3.05in; opacity: 0.12; }
+          .content { position: relative; z-index: 1; }
+          .hero { display: flex; justify-content: space-between; align-items: center; background: #203a49; border-radius: 16px; padding: 18px 26px; color: white; }
+          .hero img { width: 174px; height: auto; }
+          .hero strong { display: block; font-size: 18px; margin-bottom: 4px; }
+          .hero span { color: #eba83a; font-weight: 700; }
+          .date { margin: 16px 0 26px; text-align: right; font-size: 13px; }
+          h1 { font-size: 19px; margin: 0 0 12px; color: #111827; }
+          .present { display: inline-flex; align-items: center; gap: 13px; margin: 0 0 20px; color: #111827; font-size: 14px; font-weight: 800; letter-spacing: 6px; }
+          .present::before, .present::after { content: ""; width: 34px; height: 1px; background: #c7ccd4; }
+          .client-card { background: rgba(255,255,255,0.72); border: 1px solid #d7dde5; border-radius: 10px; margin-top: 16px; margin-bottom: 30px; padding: 15px 18px; line-height: 1.58; font-size: 12px; box-shadow: none; }
+          .intro { margin: 18px 0 0; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 0; background: transparent; border: 1px solid #6b7280; border-radius: 0; overflow: visible; }
+          th { background-color: #bfbfbf !important; color: #111827; font-size: 11px; letter-spacing: 0.3px; padding: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          td { border: 1px solid rgba(31,41,55,0.58); background: transparent; padding: 8px; font-size: 11.5px; }
+          td:nth-child(2), td:nth-child(3) { text-align: center; white-space: nowrap; }
+          td:nth-child(4) { text-align: right; white-space: nowrap; }
+          .totals { width: 38%; margin-left: auto; margin-top: 16px; background: transparent; border: 0; border-radius: 0; padding: 6px 13px; box-shadow: none; }
+          .totals div { display: flex; justify-content: space-between; font-weight: 700; padding: 4px 0; font-size: 12px; }
+          .totals div:last-child { border-top: 1px solid #d7dde5; margin-top: 4px; padding-top: 8px; color: #0f766e; font-size: 14px; }
+          .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.24in; color: #5f6672; font-size: 10px; border-top: 1px solid #d7dde5; padding-top: 9px; }
+          .footer-grid { display: grid; grid-template-columns: 1fr 1.15fr 0.85fr 2.15fr; gap: 11px; align-items: start; }
+          .footer-item { display: flex; gap: 6px; align-items: flex-start; }
+          .footer-text { color: #5f6672; text-decoration: none; line-height: 1.25; }
+          .footer-icon { width: 18px; height: 18px; min-width: 18px; border-radius: 999px; display: inline-grid; place-items: center; background: #203a49; color: #eba83a; font-size: 11px; font-weight: 700; }
+          .footer-icon svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+          .footer-address { color: #6b7280; display: block; margin-top: 2px; padding-left: 24px; font-size: 9.2px; line-height: 1.25; }
+          .footer a, .footer a:visited { color: #5f6672 !important; text-decoration: none !important; }
+          .page-break { page-break-before: always; }
+          .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 15px; }
+          .section-title::before { content: ""; width: 34px; height: 4px; border-radius: 99px; background: #eba83a; }
+          .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+          .faq article { border: 1px solid #d7dde5; border-left: 4px solid #eba83a; background: rgba(248,250,252,0.95); padding: 10px; border-radius: 9px; font-size: 11.5px; line-height: 1.35; }
+          .faq strong { display: block; margin-bottom: 4px; color: #17202b; }
+          .annex-hero { background: #203a49; color: #ffffff; border-radius: 16px; padding: 20px 22px; display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
+          .annex-hero img { width: 138px; height: auto; }
+          .annex-hero strong { display: block; color: #eba83a; font-size: 12px; letter-spacing: 1.4px; margin-bottom: 5px; }
+          .annex-hero h1 { color: #ffffff; margin: 0; font-size: 21px; }
+          .annex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; align-items: stretch; }
+          .annex-card { border: 1px solid #d7dde5; border-radius: 12px; background: rgba(255,255,255,0.76); padding: 16px; box-shadow: none; min-height: 96px; overflow: hidden; }
+          .annex-card strong { display: block; color: #17202b; font-size: 13px; margin-bottom: 6px; }
+          .annex-card p, .annex-card li { color: #4b5563; font-size: 11.5px; line-height: 1.42; margin: 0; }
+          .annex-card ul { margin: 0; padding-left: 16px; display: grid; gap: 5px; }
+          .annex-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+          .annex-stat { background: rgba(255,248,232,0.78); border: 1px solid #f0d7a0; border-radius: 12px; padding: 12px 8px; text-align: center; }
+          .annex-stat strong { display: block; color: #203a49; font-size: 18px; margin-bottom: 3px; }
+          .annex-stat span { color: #7a520f; font-size: 10.5px; font-weight: 700; line-height: 1.25; }
+          .process-list { display: grid; gap: 10px; margin-top: 14px; }
+          .process-step { display: grid; grid-template-columns: 28px 1fr; gap: 9px; align-items: start; border: 1px solid #d7dde5; border-radius: 10px; padding: 10px; background: rgba(255,255,255,0.76); }
+          .process-step b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: #203a49; color: #eba83a; font-size: 12px; }
+          .process-step strong { display: block; font-size: 12.5px; margin-bottom: 2px; }
+          .process-step span { color: #4b5563; font-size: 11px; line-height: 1.35; }
+          .notes { display: grid; gap: 7px; margin-top: 18px; line-height: 1.3; font-size: 11px; }
+          .notes p { margin: 0; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.74); border: 1px solid #e5e7eb; }
+          .prepared { display: grid; gap: 5px; margin-top: 18px; font-size: 11.5px; line-height: 1.4; background: rgba(32,58,73,0.92); color: #ffffff; border-radius: 12px; padding: 15px 16px; box-shadow: none; }
+          .prepared strong { color: #eba83a; }
+          .signature { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 24px; font-size: 12px; }
+          .signature-box { min-height: 108px; border: 1px solid #d7dde5; border-radius: 12px; background: rgba(255,255,255,0.74); padding: 12px 14px 14px; display: grid; align-content: end; justify-items: center; box-shadow: none; }
+          .signature-line { width: fit-content; border-top: 1.5px solid #17202b; padding: 7px 18px 0; color: #5f6672; font-weight: 700; text-align: center; }
+          .signature-line.date-line { min-width: 150px; }
+          .signature-line.sign-line { min-width: 175px; }
+          .signature-value { align-self: center; justify-self: center; margin-bottom: 10px; color: #17202b; font-weight: 800; }
+          .signature-image { max-width: 210px; max-height: 54px; align-self: center; justify-self: center; margin-bottom: 5px; }
+          .validity { margin-top: 24px; border: 1px solid #eba83a; background: rgba(255,248,232,0.78); color: #7a520f; border-radius: 12px; padding: 12px 14px; font-size: 11.5px; font-weight: 800; text-align: center; letter-spacing: 0.2px; }
+          .bank-card { margin-top: 14px; border: 1px solid #cfd7e2; border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.86); box-shadow: none; }
+          .bank-card-header { display: flex; justify-content: space-between; gap: 14px; align-items: center; background: #203a49; color: #ffffff; padding: 11px 14px; }
+          .bank-card-header strong { color: #eba83a; font-size: 11px; letter-spacing: 1.2px; }
+          .bank-card-header span { font-size: 10.5px; color: rgba(255,255,255,0.82); text-align: right; }
+          .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid #e5e7eb; }
+          .bank-item { display: grid; gap: 3px; padding: 9px 12px; border-right: 1px solid #e5e7eb; border-top: 1px solid #eef2f7; }
+          .bank-item:nth-child(2n) { border-right: 0; }
+          .bank-item span { color: #6b7280; font-size: 8.8px; font-weight: 800; letter-spacing: 0.55px; text-transform: uppercase; }
+          .bank-item strong { color: #17202b; font-size: 11px; line-height: 1.25; }
+          .invoice-note { margin: 0; padding: 10px 12px; color: #4b5563; font-size: 10px; line-height: 1.35; background: #f8fafc; }
+          @media screen and (max-width: 620px) {
+            html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
+            body { background: #e8edf2; }
+            .page { width: 100%; max-width: 100vw; min-height: 100dvh; padding: 14px 12px 92px; background: #ffffff; box-shadow: 0 10px 24px rgba(15,23,42,0.14); }
+            .page + .page { margin-top: 14px; }
+            .hero { border-radius: 10px; padding: 13px 14px; }
+            .hero img { width: 118px; }
+            .hero strong { font-size: 14px; }
+            h1 { font-size: 16px; }
+            .date { margin: 12px 0 18px; }
+            .client-card { margin-bottom: 22px; padding: 12px; }
+            table { font-size: 10px; }
+            th, td { padding: 6px 4px; font-size: 9.5px; }
+            .totals { width: 72%; }
+            .annex-grid, .annex-stats { grid-template-columns: 1fr; }
+            .bank-grid { grid-template-columns: 1fr; }
+            .bank-item { border-right: 0; }
+            .signature { grid-template-columns: 1fr; gap: 14px; }
+            .footer { left: 12px; right: 12px; bottom: 14px; font-size: 8.2px; padding-top: 7px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 7px 9px; }
+            .footer-icon { width: 15px; height: 15px; min-width: 15px; }
+            .footer-icon svg { width: 9px; height: 9px; }
+            .footer-address { padding-left: 21px; font-size: 7.6px; line-height: 1.2; }
+          }
+          @media print { button { display: none; } .page { width: 8.5in; } }
+        </style>
+      </head>
+      <body>
+        <section class="page">
+          <div class="watermark"></div>
+          <div class="content">
+            <div class="hero">
+              <div>
+                <strong>El sol es constante.</strong>
+                <span>Nuestra tecnología también.</span>
+              </div>
+              <img src="${logoUrl}" alt="XOLTEC" />
+            </div>
+            <div class="date">${formatLongDate(quoteDate)}</div>
+            <h1>${escapeHtml(quote.company || quote.contact)}</h1>
+            <div class="present">PRESENTE</div>
+            <p class="intro">Ponemos a su consideración nuestro presupuesto de paneles solares:</p>
+            <div class="client-card">
+              <strong>Contacto:</strong> ${escapeHtml(quote.contact)}<br>
+              <strong>Teléfono:</strong> ${escapeHtml(quote.phone)}<br>
+              <strong>Correo:</strong> ${escapeHtml(quote.email)}<br>
+              <strong>RFC:</strong> ${escapeHtml(quote.taxId)}<br>
+              <strong>Domicilio fiscal:</strong> ${escapeHtml(fiscalAddress)}<br>
+              <strong>Instalación:</strong> ${escapeHtml(installationAddress)}
+            </div>
+            <table>
+              <thead>
+                <tr><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>PRECIO UNITARIO</th><th>TOTALES</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+            <div class="totals">
+              <div><span>SUBTOTAL</span><span>${money.format(subtotal)}</span></div>
+              <div><span>DESCUENTO</span><span>${money.format(discountAmount)}</span></div>
+              <div><span>IVA</span><span>${money.format(iva)}</span></div>
+              <div><span>TOTAL</span><span>${money.format(total)}</span></div>
+            </div>
+          </div>
+          ${footer}
+        </section>
+        <section class="page page-break">
+          <div class="watermark soft"></div>
+          <div class="content">
+            <h1 class="section-title">Condiciones comerciales</h1>
+            <div class="prepared">
+              <strong>PRESUPUESTO ELABORADO POR:</strong>
+              <span>${escapeHtml(preparedBy.name)}</span>
+              <span>${escapeHtml(preparedBy.position || preparedBy.role)}</span>
+            </div>
+            <div class="notes">
+              <p><strong>NOTA UNO:</strong> SE REQUIERE ${advancePercent}% DE ANTICIPO A LA FIRMA DEL PRESENTE DOCUMENTO, ${balancePercent}% AL MOMENTO DE LA INSTALACION,</p>
+              <p><strong>NOTA DOS:</strong> GARANTÍA EN PANELES Y EQUIPOS DE 20 AÑOS</p>
+              <p><strong>NOTA TRES:</strong> EN LA PRESENTE COTIZACIÓN NO SE INCLUYE EL COSTO DE OBRA CIVIL, EN CASO DE QUE EL PROYECTO LA REQUIERA,</p>
+              <p><strong>NOTA CUATRO:</strong> EL TRAMITE DE INTERCONEXION ESTA SUJETO A LOS TIEMPOS DE LA COMISION FEDERAL DE ELECTRICIDAD Y DEMAS DEPENDENCIAS INVOLUCRADAS</p>
+              <p><strong>NOTA:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
+              <p><strong>NOTA:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
+            </div>
+            <div class="signature">
+              <div class="signature-box">
+                <div class="signature-value">${formatLongDate(quoteDate)}</div>
+                <div class="signature-line date-line">FECHA</div>
+              </div>
+              <div class="signature-box">
+                ${userSignature}
+                <div class="signature-line sign-line">FIRMA</div>
+              </div>
+            </div>
+            <div class="validity">
+              ESTE PRESUPUESTO TIENE UNA VIGENCIA DE 8 DÍAS NATURALES A PARTIR DE LA FECHA DE EXPEDICIÓN.
+            </div>
+            <div class="bank-card">
+              <div class="bank-card-header">
+                <strong>DATOS BANCARIOS</strong>
+                <span>Información para transferencia y facturación</span>
+              </div>
+              <div class="bank-grid">
+                <div class="bank-item"><span>Beneficiario</span><strong>Pedro Alejandro Torres Martínez</strong></div>
+                <div class="bank-item"><span>RFC</span><strong>TOMP770507TM4</strong></div>
+                <div class="bank-item"><span>Correo electrónico</span><strong>palejandro_torres@yahoo.com.mx</strong></div>
+                <div class="bank-item"><span>Institución bancaria</span><strong>BANORTE</strong></div>
+                <div class="bank-item"><span>Cuenta CLABE</span><strong>072 441 00662046978 0</strong></div>
+                <div class="bank-item"><span>Cuenta bancaria</span><strong>0662046978</strong></div>
+              </div>
+              <p class="invoice-note">
+                En caso de requerir factura, favor de enviar la constancia de situación fiscal,
+                especificar el régimen en el supuesto de tener varios regímenes, señalar uso del CFDI
+                y mencionar un correo electrónico.
+              </p>
+            </div>
+          </div>
+          ${footer}
+        </section>
+        <section class="page page-break">
+          <div class="watermark soft"></div>
+          <div class="content">
+            <div class="annex-hero">
+              <div>
+                <strong>ANEXO EJECUTIVO</strong>
+                <h1>Valor de la solución solar</h1>
+              </div>
+              <img src="${logoUrl}" alt="XOLTEC" />
+            </div>
+            <p class="intro">
+              Un sistema solar fotovoltaico convierte la radiación solar en energía útil para el inmueble,
+              ayudando a reducir el gasto eléctrico y a construir un activo energético de largo plazo.
+            </p>
+            <div class="annex-stats">
+              <div class="annex-stat"><strong>2-6</strong><span>años de amortización estimada</span></div>
+              <div class="annex-stat"><strong>25+</strong><span>años de vida útil esperada</span></div>
+              <div class="annex-stat"><strong>80%</strong><span>producción aproximada al año 25</span></div>
+              <div class="annex-stat"><strong>Mín.</strong><span>mantenimiento operativo</span></div>
+            </div>
+            <div class="annex-grid">
+              <article class="annex-card">
+                <strong>Ahorro y control del gasto</strong>
+                <p>La energía generada reduce el consumo tomado de la red y ayuda a proteger al cliente ante incrementos en tarifas eléctricas.</p>
+              </article>
+              <article class="annex-card">
+                <strong>Sistema modular</strong>
+                <p>La solución puede adaptarse al consumo actual y crecer conforme cambie la demanda del hogar o negocio.</p>
+              </article>
+              <article class="annex-card">
+                <strong>Bajo impacto operativo</strong>
+                <p>La operación es silenciosa, limpia y no genera contaminación local durante la producción de energía.</p>
+              </article>
+              <article class="annex-card">
+                <strong>Activo de largo plazo</strong>
+                <p>Después del periodo de recuperación, la generación se convierte en el principal beneficio económico del sistema.</p>
+              </article>
+            </div>
+            <h1 class="section-title" style="margin-top:20px;">¿Cómo funciona?</h1>
+            <div class="annex-grid">
+              <article class="annex-card"><strong>Paneles solares</strong><p>Capturan radiación solar y producen corriente continua.</p></article>
+              <article class="annex-card"><strong>Inversor</strong><p>Convierte la corriente continua en corriente alterna utilizable.</p></article>
+              <article class="annex-card"><strong>Consumo</strong><p>La energía se utiliza en tiempo real dentro del inmueble.</p></article>
+              <article class="annex-card"><strong>Monitoreo</strong><p>El inversor registra generación y permite revisar diagnósticos del sistema.</p></article>
+            </div>
+          </div>
+          ${footer}
+        </section>
+        <section class="page page-break">
+          <div class="watermark soft"></div>
+          <div class="content">
+            <div class="annex-hero">
+              <div>
+                <strong>ANEXO EJECUTIVO</strong>
+                <h1>Interconexión y mantenimiento</h1>
+              </div>
+              <img src="${logoUrl}" alt="XOLTEC" />
+            </div>
+            <h1 class="section-title">Ruta de interconexión con CFE</h1>
+            <div class="process-list">
+              <div class="process-step"><b>1</b><div><strong>Solicitud</strong><span>Presentación de solicitud y documentación técnica del sistema.</span></div></div>
+              <div class="process-step"><b>2</b><div><strong>Revisión técnica</strong><span>Evaluación de requisitos, seguridad e inspección cuando aplique.</span></div></div>
+              <div class="process-step"><b>3</b><div><strong>Medidor bidireccional</strong><span>Sustitución por medidor que registra consumo e inyección de excedentes.</span></div></div>
+              <div class="process-step"><b>4</b><div><strong>Contrato y operación</strong><span>Formalización de condiciones de interconexión e inicio de operación.</span></div></div>
+            </div>
+            <div class="annex-grid" style="margin-top:18px;">
+              <article class="annex-card">
+                <strong>Mantenimiento recomendado</strong>
+                <ul>
+                  <li>Limpieza periódica de paneles para evitar pérdidas de generación.</li>
+                  <li>Revisión de conexiones, protecciones, fusibles y puesta a tierra.</li>
+                  <li>Monitoreo del inversor para detectar anomalías de operación.</li>
+                  <li>Revisión de baterías cuando el proyecto las incluya.</li>
+                </ul>
+              </article>
+              <article class="annex-card">
+                <strong>Mensaje clave para el cliente</strong>
+                <p>La interconexión formaliza el sistema y habilita el esquema de medición para que el cliente vea el beneficio reflejado en su facturación eléctrica.</p>
+              </article>
+            </div>
+          </div>
+          ${footer}
+        </section>
+        <script>window.addEventListener("load", () => setTimeout(() => window.print(), 250));</script>
+      </body>
+    </html>
+  `);
+  printable.document.close();
+}
+
+function metric(label, value) {
+  return `
+    <article class="metric">
+      <span>${label}</span>
+      <strong>${value}</strong>
+    </article>
+  `;
+}
+
+function emptyState(text) {
+  return `<div class="empty-state">${text}</div>`;
+}
+
+function stageLabel(stage) {
+  return stage === "Negociacion" ? "Negociación" : stage;
+}
+
+function todayPlus(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function createId() {
+  if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(`${value}T12:00:00`));
+}
+
+function formatLongDate(value) {
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(value);
+}
+
+function quotePdfFooter() {
+  return `
+    <div class="footer">
+      <div class="footer-grid">
+        <div class="footer-item"><span class="footer-icon">${pdfFooterIcon("phone")}</span><span class="footer-text">722 518 5448</span></div>
+        <div class="footer-item"><span class="footer-icon">${pdfFooterIcon("mail")}</span><span class="footer-text">hola@xoltec.mx</span></div>
+        <div class="footer-item"><span class="footer-icon">${pdfFooterIcon("web")}</span><span class="footer-text">xoltec.mx</span></div>
+        <div>
+          <div class="footer-item"><span class="footer-icon">${pdfFooterIcon("pin")}</span><span class="footer-text">Guillermo González Camarena No. 999 Int. 204</span></div>
+          <span class="footer-address">Colonia Santa Fe, Delegación Álvaro Obregón</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function pdfFooterIcon(type) {
+  const icons = {
+    phone: '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.7.6 2.5a2 2 0 0 1-.5 2.1L8 9.5a16 16 0 0 0 6.5 6.5l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.6.5 2.5.6A2 2 0 0 1 22 16.9z"/></svg>',
+    mail: '<svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>',
+    web: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18M12 3c-3 3.5-3 14 0 18"/></svg>',
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s7-5.4 7-12a7 7 0 1 0-14 0c0 6.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/></svg>',
+  };
+  return icons[type] || "";
+}
+
+function formatAddress(address, fallback = "") {
+  if (!address) return fallback;
+  return [address.street, address.neighborhood, address.city, address.state, address.zip]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function loadState() {
+  const stored = localStorage.getItem("ventas-crm-state");
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    return {
+      deals: parsed.deals || [],
+      tasks: parsed.tasks || [],
+      quoteClients: parsed.quoteClients || [],
+      products: parsed.products || starterProductCatalog,
+      users: ensureStarterUsers(parsed.users || []),
+    };
+  }
+  return {
+    deals: starterDeals,
+    tasks: starterTasks,
+    quoteClients: [],
+    products: starterProductCatalog,
+    users: ensureStarterUsers([]),
+  };
+}
+
+function saveState() {
+  localStorage.setItem("ventas-crm-state", JSON.stringify(state));
+}
+
+function migrateUsers(users) {
+  return users.map((user) => ({
+    ...user,
+    position: user.position || user.role || "",
+    signature: user.signature || "",
+    superAdmin: isRicardoUser(user),
+  }));
+}
+
+function ensureStarterUsers(existingUsers) {
+  const migrated = migrateUsers(existingUsers);
+  const usersWithoutLegacyAdmin = migrated.filter((user) => user.user !== "user" && user.user !== "admin");
+
+  starterUsers.forEach((starterUser) => {
+    const existingIndex = usersWithoutLegacyAdmin.findIndex((user) => isRicardoUser(user));
+    if (existingIndex >= 0) {
+      usersWithoutLegacyAdmin[existingIndex] = {
+        ...starterUser,
+        ...usersWithoutLegacyAdmin[existingIndex],
+        superAdmin: true,
+      };
+    } else {
+      usersWithoutLegacyAdmin.unshift(starterUser);
+    }
+  });
+
+  return usersWithoutLegacyAdmin.map((user) => ({
+    ...user,
+    superAdmin: isRicardoUser(user),
+  }));
+}
+
+function isRicardoUser(user) {
+  const userName = normalizeSearchText(user && user.user);
+  const fullName = normalizeSearchText(user && user.name);
+  return userName === "ricardo" || userName === "ricardorenteria" || fullName === "ricardo renteria";
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}

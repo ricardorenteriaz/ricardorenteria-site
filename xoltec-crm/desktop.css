@@ -1,0 +1,70 @@
+@media (min-width: 621px) {
+  .auth-screen {
+    background:
+      radial-gradient(circle at 18% 16%, rgba(235, 168, 58, 0.22), transparent 30%),
+      radial-gradient(circle at 84% 76%, rgba(15, 118, 110, 0.28), transparent 34%),
+      linear-gradient(145deg, #203a49, #172d39 58%, #0f2029);
+    padding: 40px;
+  }
+
+  .auth-panel {
+    width: min(1120px, 100%);
+    min-height: 650px;
+    grid-template-columns: minmax(380px, 1fr) minmax(420px, 0.9fr);
+    gap: 42px;
+    align-items: center;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .auth-brand {
+    position: relative;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 22px;
+    background: transparent;
+    color: #ffffff;
+    margin: 0;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .auth-form {
+    align-content: center;
+    gap: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
+    padding: 44px;
+  }
+
+  .auth-brand .brand-logo {
+    position: relative;
+    z-index: 1;
+    width: min(360px, 90%);
+    height: 230px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    object-fit: contain;
+    padding: 0;
+  }
+
+  .auth-brand strong {
+    position: relative;
+    z-index: 1;
+    font-size: 2rem;
+    letter-spacing: 0.03em;
+  }
+
+  .auth-brand small {
+    position: relative;
+    z-index: 1;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.95rem;
+  }
+}

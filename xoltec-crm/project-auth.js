@@ -1,0 +1,40 @@
+const PROJECT_AUTH_KEY = "rrz-xoltec-crm-access";
+const PROJECT_PASSWORD_HASH = "a887f6ea0fecaf540544cd10a1b2cefb3a6a08c67a1e9eb0af6dca3f7c16ee05";
+
+const gateForm = document.querySelector("#project-gate-form");
+const gatePassword = document.querySelector("#project-gate-password");
+const gateError = document.querySelector("#project-gate-error");
+
+function unlockProject() {
+  document.body.classList.remove("project-locked");
+  document.body.classList.add("project-unlocked");
+}
+
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+if (sessionStorage.getItem(PROJECT_AUTH_KEY) === "ok") {
+  unlockProject();
+} else if (gatePassword) {
+  gatePassword.focus();
+}
+
+if (gateForm) {
+  gateForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const passwordHash = await sha256(gatePassword.value.trim());
+    if (passwordHash === PROJECT_PASSWORD_HASH) {
+      sessionStorage.setItem(PROJECT_AUTH_KEY, "ok");
+      unlockProject();
+      return;
+    }
+
+    gateError.textContent = "Contraseña incorrecta.";
+    gatePassword.select();
+  });
+}
