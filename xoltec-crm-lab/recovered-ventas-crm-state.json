@@ -1,0 +1,233 @@
+{
+  "deals": [
+    {
+      "id": "e496db9d-1e1a-4535-b92c-e50e02c4f03c",
+      "account": "Norte Energia",
+      "contact": "Laura Mendez",
+      "name": "Implementacion CRM ventas B2B",
+      "value": 42000,
+      "stage": "Propuesta",
+      "next": "Enviar ajuste de alcance",
+      "activity": "Hoy"
+    },
+    {
+      "id": "dde7755d-fd3b-4dd8-b16c-40e13938cfe5",
+      "account": "Clinica Altura",
+      "contact": "Diego Soto",
+      "name": "Portal de seguimiento comercial",
+      "value": 18500,
+      "stage": "Calificado",
+      "next": "Demo con direccion",
+      "activity": "Ayer"
+    },
+    {
+      "id": "6a3d80de-080c-4f74-ba24-cbe09e70ca61",
+      "account": "Grupo Madero",
+      "contact": "Sofia Ruiz",
+      "name": "Automatizacion de cotizaciones",
+      "value": 63000,
+      "stage": "Negociacion",
+      "next": "Revisar contrato",
+      "activity": "Hace 2 dias"
+    },
+    {
+      "id": "19824d93-a45a-4ec8-982b-ddfbaccc2f4a",
+      "account": "Viva Retail",
+      "contact": "Marco Vidal",
+      "name": "Capacitacion equipo ventas",
+      "value": 12000,
+      "stage": "Prospecto",
+      "next": "Calificar presupuesto",
+      "activity": "Hace 4 dias"
+    },
+    {
+      "id": "9d126d91-de56-49a9-abd6-7c9046f4f1ca",
+      "account": "Arco Logistica",
+      "contact": "Paola Herrera",
+      "name": "Soporte anual premium",
+      "value": 28500,
+      "stage": "Ganado",
+      "next": "Onboarding",
+      "activity": "Hace 1 semana"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "dd5ce9be-94fc-44de-b492-513cb8905c3c",
+      "title": "Enviar minuta de negociacion",
+      "account": "Grupo Madero",
+      "date": "2026-05-21",
+      "done": true
+    },
+    {
+      "id": "6ec90323-c937-4669-ba64-6c2ea818ad14",
+      "title": "Preparar propuesta para Norte Energia",
+      "account": "Norte Energia",
+      "date": "2026-05-22",
+      "done": true
+    },
+    {
+      "id": "7b7124c5-2a3f-4d7f-bd97-933426d0d053",
+      "title": "Confirmar asistentes a demo",
+      "account": "Clinica Altura",
+      "date": "2026-05-23",
+      "done": true
+    }
+  ],
+  "quoteClients": [
+    {
+      "id": "75102196-b946-444c-9c2a-bc95bab6fa69",
+      "company": "Ricardo Inc. SA de CV",
+      "taxId": "REZR840714BZ5",
+      "contact": "Ricardo Renteria Zepeda",
+      "email": "ricardomba@gmail.com",
+      "phone": "5646969871",
+      "notes": "Cliente lioso",
+      "referredBy": "Pedro Torres",
+      "fiscalAddress": {
+        "street": "Av Tecnologico 108 Casa 59",
+        "neighborhood": "Alvaro Obregon",
+        "city": "Metepec",
+        "state": "Mexico",
+        "zip": "52172"
+      },
+      "installationAddress": {
+        "street": "Av Tecnologico 108 Casa 59",
+        "neighborhood": "Alvaro Obregon",
+        "city": "Metepec",
+        "state": "Mexico",
+        "zip": "52172"
+      },
+      "products": [
+        {
+          "id": "panel-longi-640",
+          "name": "Panel solar marca SOL LONGI Mod 640 HIMO 6 NYTPE",
+          "price": 4800,
+          "defaultQuantity": 14,
+          "quantity": 5,
+          "lineTotal": 24000,
+          "selected": true
+        },
+        {
+          "id": "inversor-growatt-max-9000",
+          "name": "Inversor GROWAT MAX 9,000 KW Mod TL",
+          "price": 16000,
+          "defaultQuantity": 1,
+          "quantity": 1,
+          "lineTotal": 16000,
+          "selected": true
+        },
+        {
+          "id": "kit-estructural-ajustable",
+          "name": "KIT estructural Ajustable a 14 paneles solares",
+          "price": 15500,
+          "defaultQuantity": 1,
+          "quantity": 1,
+          "lineTotal": 15500,
+          "selected": true
+        },
+        {
+          "id": "cables-conectores-accesorios",
+          "name": "Cables conectores, accesorios eléctricos",
+          "price": 12350,
+          "defaultQuantity": 1,
+          "quantity": 1,
+          "lineTotal": 12350,
+          "selected": true
+        },
+        {
+          "id": "tramites-gestorias",
+          "name": "Tramites y Gestorías",
+          "price": 5500,
+          "defaultQuantity": 1,
+          "quantity": 1,
+          "lineTotal": 5500,
+          "selected": true
+        },
+        {
+          "id": "mano-obra",
+          "name": "Mano de Obra",
+          "price": 20500,
+          "defaultQuantity": 1,
+          "quantity": 1,
+          "lineTotal": 20500,
+          "selected": true
+        }
+      ],
+      "discountPercent": 5,
+      "commissionPercent": 10,
+      "commissionFor": "Santi",
+      "commissionAmount": 10342.27,
+      "totals": {
+        "subtotal": 93850,
+        "discountAmount": 4692.5,
+        "iva": 14265.2,
+        "total": 103422.7
+      },
+      "createdAt": "2026-05-21T04:22:43.983Z",
+      "updatedAt": "2026-05-21T05:41:03.653Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "73b948ac-0a90-4335-811c-e2c2d6ede10a",
+      "name": "Prueba cables",
+      "price": 1000,
+      "defaultQuantity": 1
+    },
+    {
+      "id": "panel-longi-640",
+      "name": "Panel solar marca SOL LONGI Mod 640 HIMO 6 NYTPE",
+      "price": 4800,
+      "defaultQuantity": 14
+    },
+    {
+      "id": "inversor-growatt-max-9000",
+      "name": "Inversor GROWAT MAX 9,000 KW Mod TL",
+      "price": 16000,
+      "defaultQuantity": 1
+    },
+    {
+      "id": "kit-estructural-ajustable",
+      "name": "KIT estructural Ajustable a 14 paneles solares",
+      "price": 15500,
+      "defaultQuantity": 1
+    },
+    {
+      "id": "cables-conectores-accesorios",
+      "name": "Cables conectores, accesorios eléctricos",
+      "price": 12350,
+      "defaultQuantity": 1
+    },
+    {
+      "id": "tramites-gestorias",
+      "name": "Tramites y Gestorías",
+      "price": 5500,
+      "defaultQuantity": 1
+    },
+    {
+      "id": "mano-obra",
+      "name": "Mano de Obra",
+      "price": 20500,
+      "defaultQuantity": 1
+    }
+  ],
+  "users": [
+    {
+      "user": "ricardo",
+      "password": "admin",
+      "name": "RICARDO RENTERIA",
+      "position": "SUPER ADMIN",
+      "superAdmin": true,
+      "signature": ""
+    },
+    {
+      "user": "pedro",
+      "password": "santi",
+      "name": "PEDRO TORRES",
+      "position": "DIRECTOR GENERAL DE XOLTEC SOLUCIONES SOLARES",
+      "signature": "data:image/png;base64,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",
+      "superAdmin": false
+    }
+  ]
+}

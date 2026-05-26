@@ -1,0 +1,95 @@
+.project-locked > :not(.project-gate) {
+  filter: blur(12px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.project-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(235, 168, 58, 0.22), transparent 28rem),
+    linear-gradient(135deg, rgba(32, 58, 73, 0.96), rgba(10, 18, 26, 0.98));
+}
+
+.project-gate-panel {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+  padding: 30px;
+}
+
+.project-gate-panel img {
+  width: 158px;
+  height: auto;
+}
+
+.project-gate-panel p {
+  margin: 8px 0 -8px;
+  color: #b27919;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.project-gate-panel h1 {
+  margin: 0;
+  color: #203a49;
+  font-size: clamp(2rem, 7vw, 3.15rem);
+  line-height: 1;
+}
+
+.project-gate-panel label {
+  display: grid;
+  gap: 8px;
+  color: #485563;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.project-gate-panel input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #ccd6df;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #17202b;
+  font: inherit;
+  padding: 12px 14px;
+  outline: none;
+}
+
+.project-gate-panel input:focus {
+  border-color: #eba83a;
+  box-shadow: 0 0 0 4px rgba(235, 168, 58, 0.18);
+}
+
+.project-gate-panel button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 8px;
+  background: #203a49;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+}
+
+.project-gate-panel small {
+  min-height: 18px;
+  color: #b42318;
+  font-weight: 800;
+}
+
+.project-unlocked .project-gate {
+  display: none;
+}

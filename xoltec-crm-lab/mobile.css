@@ -1,0 +1,326 @@
+@media (max-width: 620px) {
+  body {
+    background: #ffffff;
+  }
+
+  .auth-screen {
+    position: fixed;
+    inset: 0;
+    min-height: 100svh;
+    overflow: hidden;
+    align-items: stretch;
+    background:
+      linear-gradient(180deg, rgba(32, 58, 73, 0.97), rgba(32, 58, 73, 0.9)),
+      var(--brand-navy);
+    padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  }
+
+  .auth-panel {
+    width: 100%;
+    height: calc(100svh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: visible;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .auth-brand {
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    color: #ffffff;
+    padding: 0 0 12px;
+    text-align: left;
+  }
+
+  .auth-brand .brand-logo.auth-logo {
+    width: 116px;
+    height: 78px;
+    background: transparent;
+    padding: 0;
+  }
+
+  .auth-form {
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+    padding: 20px;
+  }
+
+  .auth-form h1 {
+    font-size: 1.75rem;
+  }
+
+  .auth-hint {
+    font-size: 0.82rem;
+  }
+
+  .auth-form .eyebrow {
+    color: var(--brand-gold);
+  }
+
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    padding: max(10px, env(safe-area-inset-top)) 12px 12px;
+  }
+
+  .brand {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    margin-bottom: 0;
+    justify-content: center;
+    gap: 10px;
+    border-color: transparent;
+    background: transparent;
+    padding: 8px 12px;
+    text-align: center;
+  }
+
+  .brand-logo {
+    width: 76px;
+    height: 50px;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .brand strong {
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+  }
+
+  .brand small {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.7rem;
+  }
+
+  .sidebar-footer {
+    display: none;
+    margin-top: auto;
+    padding: 0;
+  }
+
+  .sidebar-logout {
+    min-height: 48px;
+    box-shadow: none;
+    padding: 0 16px;
+    text-align: left;
+  }
+
+  .sidebar-export {
+    min-height: 48px;
+    margin-bottom: 0;
+    color: #ffffff;
+    padding: 0 16px;
+    text-align: left;
+  }
+
+  .mobile-menu-toggle {
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border: 1px solid rgba(235, 168, 58, 0.44);
+    border-radius: 8px;
+    background: rgba(235, 168, 58, 0.18);
+    color: #ffffff;
+    padding: 10px;
+  }
+
+  .mobile-menu-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    border-radius: 99px;
+    background: #ffffff;
+  }
+
+  .nav-list {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    align-content: start;
+    width: min(82vw, 320px);
+    gap: 10px;
+    background: var(--brand-navy);
+    box-shadow: 22px 0 45px rgba(0, 0, 0, 0.28);
+    padding: calc(86px + env(safe-area-inset-top)) 18px 140px;
+    transform: translateX(-110%);
+    transition: transform 180ms ease;
+  }
+
+  .sidebar.menu-open .nav-list::before {
+    content: "Menú";
+    display: block;
+    margin-bottom: 6px;
+    color: var(--brand-gold);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .nav-item {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    font-weight: 850;
+    padding: 0 16px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .sidebar.menu-open .nav-list,
+  .sidebar.menu-open .sidebar-footer {
+    display: grid;
+  }
+
+  .sidebar.menu-open .nav-list {
+    transform: translateX(0);
+  }
+
+  .sidebar.menu-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(17, 24, 39, 0.48);
+  }
+
+  .sidebar.menu-open .sidebar-footer {
+    position: fixed;
+    left: 18px;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    z-index: 45;
+    width: min(calc(82vw - 36px), 284px);
+    gap: 8px;
+    background: var(--brand-navy);
+  }
+
+  .main {
+    padding: 16px 12px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+  }
+
+  .search input,
+  .quote-client-form input,
+  .quote-client-form select,
+  .quote-client-form textarea,
+  .product-form input,
+  .auth-form input {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .panel,
+  .quote-client-card,
+  .product-card {
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .quote-card-actions,
+  .quote-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .quote-card-actions button,
+  .quote-form-actions button,
+  .primary-button,
+  .ghost-button,
+  .danger-button,
+  .whatsapp-button,
+  .email-button {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+  }
+
+  .metrics {
+    gap: 10px;
+  }
+
+  .task-item,
+  .panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-row,
+  .quote-product-row {
+    grid-template-columns: 1fr;
+  }
+
+  .commission-result {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-card-header {
+    display: grid;
+    gap: 6px;
+  }
+
+  .quote-card-header span {
+    white-space: normal;
+  }
+
+  .quote-detail-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .quote-client-form {
+    padding: 14px;
+    gap: 15px;
+  }
+
+  .quote-section-title {
+    margin-top: 4px;
+    padding: 10px 11px;
+  }
+
+  .quote-product-price {
+    text-align: left;
+  }
+}

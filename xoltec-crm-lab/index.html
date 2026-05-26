@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#203a49" />
+    <meta name="apple-mobile-web-app-title" content="XOLTEC CRM" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>XOLTEC CRM</title>
+    <link rel="manifest" href="manifest.webmanifest?v=20260525-08" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260525-08" />
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/xoltec-app-icon-192.png?v=20260525-08" />
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/xoltec-app-icon-512.png?v=20260525-08" />
+    <link rel="stylesheet" href="styles.css?v=20260525-08" />
+    <link rel="stylesheet" href="desktop.css?v=20260525-08" media="(min-width: 621px)" />
+    <link rel="stylesheet" href="mobile.css?v=20260525-08" media="(max-width: 620px)" />
+    <link rel="stylesheet" href="project-auth.css?v=20260525-01" />
+  </head>
+  <body class="project-locked">
+    <section class="project-gate" id="project-gate" aria-labelledby="project-gate-title">
+      <form class="project-gate-panel" id="project-gate-form">
+        <img src="assets/xoltec-logo.png" alt="XOLTEC" />
+        <p>Laboratorio privado</p>
+        <h1 id="project-gate-title">XOLTEC CRM LAB</h1>
+        <label>
+          Contraseña de acceso
+          <input id="project-gate-password" type="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit">Entrar al proyecto</button>
+        <small id="project-gate-error" aria-live="polite"></small>
+      </form>
+    </section>
+    <section class="auth-screen" id="auth-screen">
+      <div class="auth-panel">
+        <div class="brand auth-brand">
+          <img class="brand-logo auth-logo" src="assets/xoltec-logo.png" alt="XOLTEC" />
+          <div>
+            <strong>XOLTEC CRM</strong>
+            <small>Acceso privado</small>
+          </div>
+        </div>
+        <form class="auth-form" id="login-form">
+          <div>
+            <p class="eyebrow">Autenticacion</p>
+            <h1>Iniciar sesión</h1>
+          </div>
+          <label>
+            Usuario
+            <input id="login-user" type="text" autocomplete="username" required />
+          </label>
+          <label>
+            Contraseña
+            <input id="login-password" type="password" autocomplete="current-password" required />
+          </label>
+          <p class="auth-error" id="auth-error" role="alert"></p>
+          <button class="primary-button" type="submit">Entrar</button>
+          <p class="auth-hint">Acceso exclusivo para equipo XOLTEC</p>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell locked" id="app-shell">
+      <aside class="sidebar" aria-label="Navegacion principal">
+        <div class="brand">
+          <img class="brand-logo" src="assets/xoltec-logo.png" alt="XOLTEC" />
+          <div>
+            <strong>XOLTEC CRM</strong>
+            <small>Equipo comercial</small>
+          </div>
+        </div>
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="Abrir menú">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="quotes" type="button">Cotizar</button>
+          <button class="nav-item" data-view="quoteHistory" type="button">Cotizaciones</button>
+          <button class="nav-item" data-view="products" type="button">Productos</button>
+          <button class="nav-item super-admin-only hidden" data-view="users" type="button">Usuarios</button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="sidebar-export super-admin-only hidden" id="download-backup-button" type="button">Respaldar JSON</button>
+          <button class="sidebar-logout" id="logout-button" type="button">Cerrar sesión</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">CRM web</p>
+            <h1 id="view-title">Cotizar</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="search">
+              <span>Buscar</span>
+              <input id="search-input" type="search" placeholder="Cliente, contacto, RFC, producto..." />
+            </label>
+            <button class="primary-button hidden" id="open-deal-modal" type="button">+ Oportunidad</button>
+          </div>
+        </header>
+
+        <section class="view" id="dashboard-view" aria-labelledby="view-title">
+          <div class="metrics" id="metrics"></div>
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Pipeline activo</h2>
+                <button class="ghost-button" data-view-shortcut="pipeline" type="button">Ver pipeline</button>
+              </div>
+              <div class="compact-pipeline" id="compact-pipeline"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Próximas tareas</h2>
+                <button class="ghost-button" data-view-shortcut="tasks" type="button">Ver tareas</button>
+              </div>
+              <div class="task-list" id="upcoming-tasks"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="pipeline-view" aria-labelledby="view-title">
+          <div class="pipeline-board" id="pipeline-board"></div>
+        </section>
+
+        <section class="view" id="accounts-view" aria-labelledby="view-title">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cuenta</th>
+                  <th>Contacto</th>
+                  <th>Etapa</th>
+                  <th>Valor</th>
+                  <th>Última actividad</th>
+                </tr>
+              </thead>
+              <tbody id="accounts-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="tasks-view" aria-labelledby="view-title">
+          <form class="task-composer" id="task-form">
+            <input id="task-title" type="text" placeholder="Nueva tarea" required />
+            <input id="task-account" type="text" placeholder="Cuenta" required />
+            <input id="task-date" type="date" required />
+            <button class="primary-button" type="submit">Agregar</button>
+          </form>
+          <div class="task-list roomy" id="all-tasks"></div>
+        </section>
+
+        <section class="view active" id="quotes-view" aria-labelledby="view-title">
+          <div class="quotes-layout">
+            <form class="quote-client-form panel" id="quote-client-form">
+              <div class="panel-header">
+                <h2 id="quote-form-title">Nueva cotización</h2>
+                <span class="pill" id="quote-form-mode">Cliente + productos</span>
+              </div>
+              <div class="form-row">
+                <label>
+                  Contacto
+                  <input id="quote-contact" type="text" required />
+                </label>
+                <label>
+                  Teléfono
+                  <input id="quote-phone" type="tel" required />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>
+                  Empresa
+                  <input id="quote-company" type="text" placeholder="Opcional" />
+                </label>
+                <label>
+                  Correo
+                  <input id="quote-email" type="email" required />
+                </label>
+              </div>
+              <label>
+                Observaciones para la cotización
+                <textarea id="quote-notes" rows="3" placeholder="Necesidades, alcance o condiciones especiales"></textarea>
+              </label>
+
+              <div class="quote-section-title">Datos fiscales</div>
+              <label>
+                RFC
+                <input id="quote-tax-id" type="text" required />
+              </label>
+              <div class="form-row">
+                <label>
+                  Calle y número
+                  <input id="quote-fiscal-street" type="text" required />
+                </label>
+                <label>
+                  Colonia/Delegación
+                  <input id="quote-fiscal-neighborhood" type="text" required />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>
+                  Municipio
+                  <input id="quote-fiscal-city" type="text" required />
+                </label>
+                <label>
+                  Estado
+                  <select id="quote-fiscal-state" required></select>
+                </label>
+              </div>
+              <label class="zip-field">
+                C.P.
+                <input id="quote-fiscal-zip" type="text" inputmode="numeric" required />
+              </label>
+
+              <div class="quote-section-title">Domicilio de instalación</div>
+              <label class="checkbox-row">
+                <input id="same-install-address" type="checkbox" />
+                Misma dirección que domicilio fiscal
+              </label>
+              <div class="form-row">
+                <label>
+                  Calle y número
+                  <input id="quote-install-street" type="text" required />
+                </label>
+                <label>
+                  Colonia/Delegación
+                  <input id="quote-install-neighborhood" type="text" required />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>
+                  Municipio
+                  <input id="quote-install-city" type="text" required />
+                </label>
+                <label>
+                  Estado
+                  <select id="quote-install-state" required></select>
+                </label>
+              </div>
+              <label class="zip-field">
+                C.P.
+                <input id="quote-install-zip" type="text" inputmode="numeric" required />
+              </label>
+
+              <div class="quote-section-title">Productos a cotizar</div>
+              <button class="ghost-button price-unlock-button" id="unlock-prices" type="button">
+                Modificar precios
+              </button>
+              <div class="quote-products" id="quote-products"></div>
+              <label>
+                Referido por
+                <input id="quote-referred-by" type="text" placeholder="Cliente, contacto o campaña" />
+              </label>
+              <label class="zip-field">
+                Descuento del:
+                <div class="percent-input">
+                  <input id="quote-discount" type="number" min="0" max="100" step="0.5" value="0" />
+                  <span>%</span>
+                </div>
+              </label>
+              <div class="quote-total-box" id="quote-total-box"></div>
+              <div class="internal-commission-box">
+                <div class="quote-section-title">Comisión que paga el cliente</div>
+                <div class="form-row">
+                  <label class="zip-field">
+                    % Comisión
+                    <div class="percent-input">
+                      <input id="quote-commission-percent" type="number" min="0" max="100" step="0.5" value="0" />
+                      <span>%</span>
+                    </div>
+                  </label>
+                  <label>
+                    Para:
+                    <input id="quote-commission-for" type="text" placeholder="Nombre de quien recibe la comisión" />
+                  </label>
+                </div>
+                <div class="commission-result" id="commission-result"></div>
+              </div>
+              <label class="zip-field">
+                Anticipo requerido
+                <div class="percent-input">
+                  <input id="quote-advance-percent" type="number" min="0" max="100" step="0.5" value="70" />
+                  <span>%</span>
+                </div>
+              </label>
+              <div class="quote-form-actions">
+                <button class="primary-button" id="quote-save-button" type="submit">Guardar cotización</button>
+                <button class="ghost-button hidden" id="quote-cancel-edit" type="button">Cancelar edición</button>
+              </div>
+            </form>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Última cotización capturada</h2>
+                <span id="quote-latest-count" class="pill">0</span>
+              </div>
+              <div class="quote-client-list" id="quote-latest-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="quote-history-view" aria-labelledby="view-title">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Cotizaciones guardadas</h2>
+              <span id="quote-client-count" class="pill">0</span>
+            </div>
+            <div class="quote-client-list quote-history-list" id="quote-client-list"></div>
+          </section>
+        </section>
+
+        <section class="view" id="products-view" aria-labelledby="view-title">
+          <div class="products-layout">
+            <form class="panel product-form" id="product-form">
+              <div class="panel-header">
+                <h2 id="product-form-title">Nuevo producto o concepto</h2>
+                <span class="pill" id="product-form-mode">Catálogo</span>
+              </div>
+              <label>
+                Descripción
+                <input id="product-name" type="text" required />
+              </label>
+              <div class="form-row">
+                <label>
+                  Precio base
+                  <input id="product-price" type="number" min="0" step="100" required />
+                </label>
+                <label>
+                  Cantidad sugerida
+                  <input id="product-quantity" type="number" min="1" step="1" value="1" required />
+                </label>
+              </div>
+              <div class="quote-form-actions">
+                <button class="primary-button" id="product-save-button" type="submit">Agregar producto</button>
+                <button class="ghost-button hidden" id="product-cancel-edit" type="button">Cancelar edición</button>
+              </div>
+            </form>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Productos disponibles</h2>
+                <span id="product-count" class="pill">0</span>
+              </div>
+              <div class="product-list" id="product-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="users-view" aria-labelledby="view-title">
+          <div class="products-layout">
+            <form class="panel product-form" id="user-form">
+              <div class="panel-header">
+                <h2 id="user-form-title">Nuevo usuario</h2>
+                <span class="pill" id="user-form-mode">Agregar usuario</span>
+              </div>
+              <div class="form-row">
+                <label>
+                  Usuario
+                  <input id="new-user-login" type="text" autocomplete="off" required />
+                </label>
+                <label>
+                  Contraseña
+                  <input id="new-user-password" type="password" autocomplete="new-password" required />
+                </label>
+              </div>
+              <label>
+                Nombre completo
+                <input id="new-user-name" type="text" required />
+              </label>
+              <label>
+                Puesto
+                <input id="new-user-position" type="text" required />
+              </label>
+              <div class="signature-editor">
+                <div class="panel-header">
+                  <h2>Firma</h2>
+                  <span class="pill">Opcional</span>
+                </div>
+                <canvas id="signature-pad" width="520" height="180" aria-label="Área para dibujar firma"></canvas>
+                <div class="quote-form-actions">
+                  <button class="ghost-button" id="clear-signature" type="button">Limpiar firma</button>
+                  <label class="ghost-button file-button">
+                    Importar firma
+                    <input id="signature-upload" type="file" accept="image/*" />
+                  </label>
+                </div>
+              </div>
+              <div class="quote-form-actions">
+                <button class="primary-button" id="user-save-button" type="submit">Agregar usuario</button>
+                <button class="ghost-button hidden" id="user-cancel-edit" type="button">Cancelar edición</button>
+              </div>
+            </form>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Usuarios registrados</h2>
+                <span id="user-count" class="pill">0</span>
+              </div>
+              <div class="product-list" id="user-list"></div>
+            </section>
+
+            <section class="panel admin-backup-panel super-admin-only hidden">
+              <div class="panel-header">
+                <h2>Respaldos del CRM</h2>
+                <span class="pill">Super admin</span>
+              </div>
+              <p class="backup-copy">
+                Descarga un respaldo completo de clientes, cotizaciones, productos, usuarios y firmas.
+                Guárdalo en iCloud Drive, Drive o correo para poder restaurarlo si cambia de equipo.
+              </p>
+              <div class="quote-form-actions">
+                <button class="primary-button" id="admin-download-backup" type="button">Descargar respaldo</button>
+                <button class="ghost-button" id="admin-copy-backup" type="button">Copiar para iPhone</button>
+                <label class="ghost-button file-button">
+                  Restaurar archivo
+                  <input id="admin-import-backup-file" type="file" accept="application/json" />
+                </label>
+                <button class="ghost-button" id="admin-import-backup-text" type="button">Restaurar texto</button>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="deal-modal">
+      <form method="dialog" class="modal-card" id="deal-form">
+        <div class="modal-header">
+          <h2>Nueva oportunidad</h2>
+          <button class="icon-button" value="cancel" type="button" id="close-deal-modal" aria-label="Cerrar">×</button>
+        </div>
+        <label>
+          Cuenta
+          <input id="deal-account" type="text" required />
+        </label>
+        <label>
+          Contacto
+          <input id="deal-contact" type="text" required />
+        </label>
+        <label>
+          Nombre del trato
+          <input id="deal-name" type="text" required />
+        </label>
+        <div class="form-row">
+          <label>
+            Valor
+            <input id="deal-value" type="number" min="0" step="500" required />
+          </label>
+          <label>
+            Etapa
+            <select id="deal-stage" required>
+              <option value="Prospecto">Prospecto</option>
+              <option value="Calificado">Calificado</option>
+              <option value="Propuesta">Propuesta</option>
+              <option value="Negociacion">Negociación</option>
+              <option value="Ganado">Ganado</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Próximo paso
+          <input id="deal-next" type="text" required />
+        </label>
+        <menu>
+          <button class="ghost-button" value="cancel" type="button" id="cancel-deal">Cancelar</button>
+          <button class="primary-button" value="default" type="submit">Guardar</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="project-auth.js?v=20260525-01"></script>
+    <script src="app.js?v=20260525-08"></script>
+  </body>
+</html>
