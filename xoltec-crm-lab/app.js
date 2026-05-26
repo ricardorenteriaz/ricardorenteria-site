@@ -784,7 +784,7 @@ function addTask(event) {
   render();
 }
 
-function addQuoteClient(event) {
+async function addQuoteClient(event) {
   event.preventDefault();
   const products = selectedQuoteProducts();
   const totals = calculateQuoteTotals(products);
@@ -824,6 +824,15 @@ function addQuoteClient(event) {
     updatedAt: editingQuoteId ? new Date().toISOString() : null,
   };
 
+  if (isSupabaseSession()) {
+    const savedQuote = await saveSupabaseQuote(quote, Boolean(editingQuoteId));
+    if (!savedQuote) return;
+    quote.id = savedQuote.id;
+    quote.createdAt = savedQuote.created_at;
+    quote.updatedAt = savedQuote.updated_at;
+    quote.preparedByUser = savedQuote.prepared_by;
+  }
+
   if (editingQuoteId) {
     state.quoteClients = state.quoteClients.map((item) => (item.id === editingQuoteId ? quote : item));
   } else {
@@ -833,6 +842,77 @@ function addQuoteClient(event) {
   saveState();
   resetQuoteForm();
   render();
+}
+
+async function saveSupabaseQuote(quote, isEditing) {
+  const currentUser = getCurrentUser();
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    prepared_by: currentUser.id || null,
+    company: quote.company,
+    tax_id: quote.taxId,
+    contact: quote.contact,
+    email: quote.email,
+    phone: quote.phone,
+    notes: quote.notes,
+    referred_by: quote.referredBy,
+    fiscal_address: quote.fiscalAddress,
+    installation_address: quote.installationAddress,
+    discount_percent: quote.discountPercent,
+    commission_percent: quote.commissionPercent,
+    commission_applied_percent: quote.commissionAppliedPercent,
+    commission_for: quote.commissionFor,
+    commission_amount: quote.commissionAmount,
+    company_commission_amount: quote.companyCommissionAmount,
+    advance_percent: quote.advancePercent,
+    subtotal: quote.totals.subtotal,
+    discount_amount: quote.totals.discountAmount,
+    iva: quote.totals.iva,
+    total: quote.totals.total,
+    updated_at: isEditing ? new Date().toISOString() : null,
+  };
+
+  const quoteQuery = isEditing
+    ? supabaseClient.from("quotes").update(payload).eq("id", quote.id).select().single()
+    : supabaseClient.from("quotes").insert(payload).select().single();
+  const { data: savedQuote, error: quoteError } = await quoteQuery;
+
+  if (quoteError) {
+    window.alert(`No pude guardar la cotización en Supabase: ${quoteError.message}`);
+    return null;
+  }
+
+  if (isEditing) {
+    const { error: deleteError } = await supabaseClient.from("quote_items").delete().eq("quote_id", savedQuote.id);
+    if (deleteError) {
+      window.alert(`Guardé la cotización, pero no pude actualizar sus conceptos: ${deleteError.message}`);
+      return null;
+    }
+  }
+
+  const items = quote.products.map((product, index) => ({
+    quote_id: savedQuote.id,
+    product_id: isUuid(product.id) ? product.id : null,
+    legacy_product_id: product.legacyId || (!isUuid(product.id) ? product.id : null),
+    name: product.name,
+    base_price: product.basePrice || product.price,
+    price: product.price,
+    quantity: product.quantity,
+    default_quantity: product.defaultQuantity || 1,
+    line_total: product.lineTotal,
+    base_line_total: product.baseLineTotal || product.lineTotal,
+    commission_adjustment_percent: product.commissionAdjustmentPercent || 0,
+    commission_adjustment_amount: product.commissionAdjustmentAmount || 0,
+    sort_order: index,
+  }));
+
+  const { error: itemsError } = await supabaseClient.from("quote_items").insert(items);
+  if (itemsError) {
+    window.alert(`Guardé la cotización, pero no pude guardar sus conceptos: ${itemsError.message}`);
+    return null;
+  }
+
+  return savedQuote;
 }
 
 function renderQuoteClients() {
@@ -973,12 +1053,20 @@ function unlockQuotePrices() {
   document.querySelector("#unlock-prices").textContent = "Precios desbloqueados";
 }
 
-function deleteQuote(quoteId) {
+async function deleteQuote(quoteId) {
   const quote = state.quoteClients.find((item) => item.id === quoteId);
   if (!quote) return;
   const quoteName = quote.company || quote.contact || "esta cotización";
   const confirmed = window.confirm(`¿Eliminar la cotización de ${quoteName}? Esta acción no se puede deshacer.`);
   if (!confirmed) return;
+
+  if (isSupabaseSession()) {
+    const { error } = await supabaseClient.from("quotes").delete().eq("id", quoteId);
+    if (error) {
+      window.alert(`No pude eliminar la cotización en Supabase: ${error.message}`);
+      return;
+    }
+  }
 
   state.quoteClients = state.quoteClients.filter((item) => item.id !== quoteId);
   if (editingQuoteId === quoteId) {
@@ -1438,6 +1526,12 @@ async function deleteProduct(productId) {
 
 function isSupabaseSession() {
   return Boolean(supabaseClient) && sessionStorage.getItem("ventas-crm-auth-provider") === "supabase";
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || ""),
+  );
 }
 
 function isAdminPassword(password) {
