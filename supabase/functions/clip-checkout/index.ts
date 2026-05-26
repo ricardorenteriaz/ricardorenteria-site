@@ -73,10 +73,25 @@ Deno.serve(async (request) => {
         error: `${siteUrl}/?payment=error&reference=${reference}`,
         default: `${siteUrl}/?payment=cancelled&reference=${reference}`,
       },
+      override_settings: {
+        locale: "es-MX",
+        tip_enabled: false,
+        merchant_info: {
+          show_contact_info: true,
+        },
+      },
       metadata: {
         external_reference: reference,
         customer_info: { name, email },
         source: "ricardorenteria.pro",
+      },
+      custom_payment_options: {
+        international_enabled: false,
+        payment_method_brands: ["visa", "mastercard", "carnet"],
+        payment_method_types: ["debit", "credit"],
+      },
+      prevention_data: {
+        submerchant_id: "ricardorenteria-pro",
       },
     };
 
