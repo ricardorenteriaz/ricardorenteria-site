@@ -7,6 +7,15 @@ const supabaseClient =
   window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
+const supabaseSignupClient =
+  window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
 
 const starterUsers = [
   {
@@ -1279,11 +1288,12 @@ function renderProductsCatalog() {
   });
 }
 
-function addUser(event) {
+async function addUser(event) {
   event.preventDefault();
-  const user = document.querySelector("#new-user-login").value.trim();
+  const user = document.querySelector("#new-user-login").value.trim().toLowerCase();
   const existingUser = state.users.find((item) => item.user === editingUserName);
   const currentSignature = signatureDataUrl || readSignaturePad();
+  const selectedRole = document.querySelector("#new-user-role").value || "seller";
 
   if (!editingUserName && state.users.some((item) => item.user === user)) {
     window.alert("Ese usuario ya existe.");
@@ -1296,13 +1306,27 @@ function addUser(event) {
   }
 
   const updatedUser = {
+    id: existingUser && existingUser.id,
     user,
     password: document.querySelector("#new-user-password").value,
     name: document.querySelector("#new-user-name").value.trim().toUpperCase(),
     position: document.querySelector("#new-user-position").value.trim().toUpperCase(),
     signature: currentSignature,
-    superAdmin: isRicardoUser({ user, name: document.querySelector("#new-user-name").value.trim() }),
+    superAdmin: selectedRole === "super_admin",
+    role: selectedRole,
   };
+
+  if (isSupabaseSession()) {
+    const savedUser = await saveSupabaseUser(updatedUser, Boolean(editingUserName));
+    if (!savedUser) return;
+    updatedUser.id = savedUser.id;
+    updatedUser.user = savedUser.username;
+    updatedUser.name = savedUser.full_name;
+    updatedUser.position = savedUser.position;
+    updatedUser.signature = savedUser.signature_url || "";
+    updatedUser.role = savedUser.role;
+    updatedUser.superAdmin = savedUser.role === "super_admin";
+  }
 
   if (editingUserName) {
     state.users = state.users.map((item) => (item.user === editingUserName ? updatedUser : item));
@@ -1320,6 +1344,60 @@ function addUser(event) {
   syncAuthView();
 }
 
+async function saveSupabaseUser(user, isEditing) {
+  let authUserId = user.id;
+
+  if (!isEditing) {
+    if (!supabaseSignupClient) {
+      window.alert("Supabase no está disponible para crear accesos.");
+      return null;
+    }
+
+    const { data, error } = await supabaseSignupClient.auth.signUp({
+      email: user.user,
+      password: user.password,
+    });
+
+    if (error || !data.user) {
+      window.alert(`No pude crear el acceso en Supabase: ${error ? error.message : "sin usuario devuelto"}`);
+      return null;
+    }
+
+    authUserId = data.user.id;
+  }
+
+  const payload = {
+    id: authUserId,
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    username: user.user,
+    full_name: user.name,
+    position: user.position,
+    role: user.role || "seller",
+    signature_url: user.signature || null,
+  };
+
+  const query = isEditing
+    ? supabaseClient
+        .from("profiles")
+        .update(payload)
+        .eq("id", authUserId)
+        .select("id, username, full_name, position, role, signature_url")
+        .single()
+    : supabaseClient
+        .from("profiles")
+        .insert(payload)
+        .select("id, username, full_name, position, role, signature_url")
+        .single();
+  const { data, error } = await query;
+
+  if (error) {
+    window.alert(`El acceso se creó, pero no pude guardar el perfil del CRM: ${error.message}`);
+    return null;
+  }
+
+  return data;
+}
+
 function renderUsers() {
   const list = document.querySelector("#user-list");
   if (!list) return;
@@ -1335,7 +1413,7 @@ function renderUsers() {
             <div class="deal-meta">
               <span>${escapeHtml(user.user)}</span>
               <span>${escapeHtml(user.position || user.role)}</span>
-              ${user.superAdmin ? "<span>Super admin</span>" : ""}
+              <span>${userRoleLabel(user.role, user.superAdmin)}</span>
             </div>
             <div class="quote-card-actions">
               <button class="ghost-button" data-edit-user="${user.user}" type="button">Editar</button>
@@ -1364,9 +1442,11 @@ function editUser(userName) {
 
   editingUserName = user.user;
   document.querySelector("#new-user-login").value = user.user;
-  document.querySelector("#new-user-password").value = user.password;
+  document.querySelector("#new-user-password").value = "";
+  document.querySelector("#new-user-password").required = false;
   document.querySelector("#new-user-name").value = user.name;
   document.querySelector("#new-user-position").value = user.position || user.role || "";
+  document.querySelector("#new-user-role").value = user.role || (user.superAdmin ? "super_admin" : "seller");
   loadSignatureToPad(user.signature || "");
   updateUserFormMode();
   document.querySelector("#user-form").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1375,6 +1455,8 @@ function editUser(userName) {
 function resetUserForm() {
   editingUserName = null;
   document.querySelector("#user-form").reset();
+  document.querySelector("#new-user-password").required = true;
+  document.querySelector("#new-user-role").value = "seller";
   clearSignaturePad();
   updateUserFormMode();
 }
@@ -1387,12 +1469,20 @@ function updateUserFormMode() {
   document.querySelector("#user-cancel-edit").classList.toggle("hidden", !isEditing);
 }
 
-function deleteUser(userName) {
+async function deleteUser(userName) {
   const user = state.users.find((item) => item.user === userName);
   if (!user || user.superAdmin) return;
 
   const confirmed = window.confirm(`¿Eliminar el usuario ${user.user}?`);
   if (!confirmed) return;
+
+  if (isSupabaseSession() && user.id) {
+    const { error } = await supabaseClient.from("profiles").delete().eq("id", user.id);
+    if (error) {
+      window.alert(`No pude eliminar el perfil del CRM: ${error.message}`);
+      return;
+    }
+  }
 
   state.users = state.users.filter((item) => item.user !== userName);
   if (editingUserName === userName) {
@@ -1400,6 +1490,12 @@ function deleteUser(userName) {
   }
   saveState();
   renderUsers();
+}
+
+function userRoleLabel(role, superAdmin = false) {
+  if (role === "super_admin" || superAdmin) return "Super admin";
+  if (role === "admin") return "Admin";
+  return "Vendedor";
 }
 
 function setupSignaturePad() {

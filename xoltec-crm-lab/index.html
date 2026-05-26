@@ -359,8 +359,8 @@
               </div>
               <div class="form-row">
                 <label>
-                  Usuario
-                  <input id="new-user-login" type="text" autocomplete="off" required />
+                  Correo de acceso
+                  <input id="new-user-login" type="email" autocomplete="off" required />
                 </label>
                 <label>
                   Contraseña
@@ -374,6 +374,14 @@
               <label>
                 Puesto
                 <input id="new-user-position" type="text" required />
+              </label>
+              <label>
+                Rol
+                <select id="new-user-role">
+                  <option value="seller">Vendedor</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super admin</option>
+                </select>
               </label>
               <div class="signature-editor">
                 <div class="panel-header">

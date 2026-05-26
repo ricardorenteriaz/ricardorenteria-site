@@ -37,6 +37,22 @@ on public.profiles for update
 using (id = auth.uid())
 with check (id = auth.uid());
 
+drop policy if exists "profiles insert super admins" on public.profiles;
+create policy "profiles insert super admins"
+on public.profiles for insert
+with check (organization_id = public.current_organization_id() and public.current_role() = 'super_admin');
+
+drop policy if exists "profiles update super admins" on public.profiles;
+create policy "profiles update super admins"
+on public.profiles for update
+using (organization_id = public.current_organization_id() and public.current_role() = 'super_admin')
+with check (organization_id = public.current_organization_id() and public.current_role() = 'super_admin');
+
+drop policy if exists "profiles delete super admins" on public.profiles;
+create policy "profiles delete super admins"
+on public.profiles for delete
+using (organization_id = public.current_organization_id() and public.current_role() = 'super_admin');
+
 drop policy if exists "organizations read own" on public.organizations;
 create policy "organizations read own"
 on public.organizations for select
