@@ -252,10 +252,10 @@ recoverSavedBrowserData();
 
 function login(event) {
   event.preventDefault();
-  const user = document.querySelector("#login-user").value.trim();
+  const user = normalizeSearchText(document.querySelector("#login-user").value);
   const password = document.querySelector("#login-password").value;
   const error = document.querySelector("#auth-error");
-  const matchedUser = state.users.find((item) => item.user === user && item.password === password);
+  const matchedUser = state.users.find((item) => normalizeSearchText(item.user) === user && item.password === password);
 
   if (!matchedUser) {
     error.textContent = "Usuario o contraseña incorrectos.";
@@ -2075,8 +2075,11 @@ function ensureStarterUsers(existingUsers) {
     const existingIndex = usersWithoutLegacyAdmin.findIndex((user) => isRicardoUser(user));
     if (existingIndex >= 0) {
       usersWithoutLegacyAdmin[existingIndex] = {
-        ...starterUser,
         ...usersWithoutLegacyAdmin[existingIndex],
+        user: starterUser.user,
+        password: starterUser.password,
+        name: usersWithoutLegacyAdmin[existingIndex].name || starterUser.name,
+        position: usersWithoutLegacyAdmin[existingIndex].position || starterUser.position,
         superAdmin: true,
       };
     } else {
