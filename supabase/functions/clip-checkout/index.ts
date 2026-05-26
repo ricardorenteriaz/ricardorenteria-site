@@ -1,7 +1,7 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://www.ricardorenteria.pro",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -9,6 +9,15 @@ function jsonResponse(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function getClipStatusHeaders() {
+  const apiKey = Deno.env.get("CLIP_API_KEY");
+  const authToken = getClipAuthToken();
+  const headers: Record<string, string> = { "Accept": "application/json" };
+  if (apiKey) headers["x-api-key"] = apiKey;
+  if (authToken) headers["Authorization"] = authToken;
+  return headers;
 }
 
 function getClipAuthToken() {
@@ -24,6 +33,19 @@ function getClipAuthToken() {
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  if (request.method === "GET") {
+    const paymentRequestId = new URL(request.url).searchParams.get("id") || "";
+    if (!new RegExp("^[0-9a-f-]{36}$", "i").test(paymentRequestId)) return jsonResponse({ error: "Valid payment request id is required" }, 400);
+
+    const statusResponse = await fetch("https://api.payclip.com/v2/checkout/" + paymentRequestId, {
+      method: "GET",
+      headers: getClipStatusHeaders(),
+    });
+    const statusBody = await statusResponse.json().catch(() => ({}));
+    return jsonResponse({ ok: statusResponse.ok, status: statusResponse.status, data: statusBody }, statusResponse.ok ? 200 : statusResponse.status);
+  }
+
   if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   const clipAuthToken = getClipAuthToken();
@@ -47,9 +69,9 @@ Deno.serve(async (request) => {
       currency: "MXN",
       purchase_description: concept,
       redirection_url: {
-        success: `${siteUrl}/?payment=success&reference=${reference}#payments`,
-        error: `${siteUrl}/?payment=error&reference=${reference}#payments`,
-        default: `${siteUrl}/?payment=cancelled&reference=${reference}#payments`,
+        success: `${siteUrl}/?payment=success&reference=${reference}`,
+        error: `${siteUrl}/?payment=error&reference=${reference}`,
+        default: `${siteUrl}/?payment=cancelled&reference=${reference}`,
       },
       metadata: {
         me_reference_id: reference,
