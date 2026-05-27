@@ -1095,7 +1095,7 @@ function renderQuoteProducts() {
           </label>
           <label class="quote-price-input">
             Precio
-            <input class="quote-product-price-input" data-product-id="${product.id}" type="number" min="0" step="100" value="${product.price}" ${pricesUnlocked ? "" : "disabled"} />
+            <input class="quote-product-price-input" data-product-id="${product.id}" type="number" min="0" step="0.01" value="${product.price}" ${pricesUnlocked ? "" : "disabled"} />
           </label>
           <label class="quote-quantity">
             Cant.
@@ -1188,11 +1188,21 @@ function applyQuoteProducts(products) {
 
 function unlockQuotePrices() {
   if (pricesUnlocked) return;
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.superAdmin) {
+    setQuotePricesUnlocked();
+    return;
+  }
+
   const password = window.prompt("Contraseña de administrador para modificar precios:");
   if (!isAdminPassword(password)) {
     window.alert("Contraseña incorrecta.");
     return;
   }
+  setQuotePricesUnlocked();
+}
+
+function setQuotePricesUnlocked() {
   pricesUnlocked = true;
   document.querySelectorAll(".quote-product-price-input").forEach((input) => {
     input.disabled = false;
