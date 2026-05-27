@@ -489,6 +489,7 @@ function dbQuoteToLocal(quote) {
   return {
     id: quote.id,
     company: quote.company,
+    quoteType: quote.quote_type || "solar",
     taxId: quote.tax_id,
     contact: quote.contact,
     email: quote.email,
@@ -953,6 +954,7 @@ async function addQuoteClient(event) {
   const quote = {
     id: editingQuoteId || createId(),
     company: document.querySelector("#quote-company").value.trim(),
+    quoteType: document.querySelector("#quote-type").value || "solar",
     taxId: document.querySelector("#quote-tax-id").value.trim(),
     contact: document.querySelector("#quote-contact").value.trim(),
     email: document.querySelector("#quote-email").value.trim(),
@@ -1001,6 +1003,7 @@ async function saveSupabaseQuote(quote, isEditing) {
     organization_id: XOLTEC_ORGANIZATION_ID,
     prepared_by: currentUser.id || null,
     company: quote.company,
+    quote_type: quote.quoteType || "solar",
     tax_id: quote.taxId,
     contact: quote.contact,
     email: quote.email,
@@ -1026,7 +1029,18 @@ async function saveSupabaseQuote(quote, isEditing) {
   const quoteQuery = isEditing
     ? supabaseClient.from("quotes").update(payload).eq("id", quote.id).select().single()
     : supabaseClient.from("quotes").insert(payload).select().single();
-  const { data: savedQuote, error: quoteError } = await quoteQuery;
+  let { data: savedQuote, error: quoteError } = await quoteQuery;
+
+  if (quoteError && String(quoteError.message || "").includes("quote_type")) {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.quote_type;
+    const fallbackQuery = isEditing
+      ? supabaseClient.from("quotes").update(fallbackPayload).eq("id", quote.id).select().single()
+      : supabaseClient.from("quotes").insert(fallbackPayload).select().single();
+    const fallbackResult = await fallbackQuery;
+    savedQuote = fallbackResult.data;
+    quoteError = fallbackResult.error;
+  }
 
   if (quoteError) {
     window.alert(`No pude guardar la cotización en Supabase: ${quoteError.message}`);
@@ -1160,6 +1174,7 @@ function editQuote(quoteId) {
 
   editingQuoteId = quote.id;
   setView("quotes");
+  document.querySelector("#quote-type").value = quote.quoteType || "solar";
   document.querySelector("#quote-company").value = quote.company || "";
   document.querySelector("#quote-tax-id").value = quote.taxId || "";
   document.querySelector("#quote-contact").value = quote.contact || "";
@@ -1321,6 +1336,10 @@ function calculateQuoteTotals(products) {
 function formatProductQuantity(product) {
   const quantity = Number(product && product.quantity) || Number(product && product.defaultQuantity) || 1;
   return product && product.isLot ? `${quantity} LOTE` : String(quantity);
+}
+
+function quoteTypeLabel(type) {
+  return type === "maintenance" ? "Mantenimiento y obra civil" : "Paneles solares";
 }
 
 function commissionPriceAdjustmentPercent() {
@@ -1951,6 +1970,7 @@ function quoteSearchText(client) {
     client.commissionAppliedPercent,
     client.commissionFor,
     client.advancePercent,
+    quoteTypeLabel(client.quoteType),
     client.totals && client.totals.subtotal,
     client.totals && client.totals.discountAmount,
     client.totals && client.totals.iva,
@@ -2011,6 +2031,7 @@ function quoteClientCard(client) {
         ${quoteDetailRow("Teléfono", client.phone)}
         ${quoteDetailRow("Correo", client.email)}
         ${quoteDetailRow("RFC", client.taxId || "Pendiente")}
+        ${quoteDetailRow("Tipo", quoteTypeLabel(client.quoteType))}
         ${quoteDetailRow("Referido por", client.referredBy || "Sin referido")}
         ${quoteDetailRow("Fecha", formatDate(client.createdAt.slice(0, 10)))}
         ${quoteDetailRow("Domicilio fiscal", fiscalAddress)}
@@ -2133,6 +2154,44 @@ function appIcon(type) {
   return `<span class="button-icon">${icons[type] || ""}</span>`;
 }
 
+function quoteCommercialTerms(type, total, advancePercent, balancePercent) {
+  if (type === "maintenance") {
+    const firstPayment = total * (advancePercent / 100);
+    const balancePayment = total - firstPayment;
+    return `
+      <div class="terms-card maintenance-terms">
+        <div class="terms-summary">
+          <span>COSTO TOTAL DE LOS TRABAJOS</span>
+          <strong>${money.format(total)}</strong>
+        </div>
+        <div class="payment-grid">
+          <div><span>Anticipo solicitado</span><strong>${advancePercent}% · ${money.format(firstPayment)}</strong></div>
+          <div><span>Saldo contra avance/finalización</span><strong>${balancePercent}% · ${money.format(balancePayment)}</strong></div>
+        </div>
+        <div class="notes">
+          <p>Todas las actividades descritas se realizarán por niveles, de tal manera que la totalidad de la instalación eléctrica quedará revisada y, de ser el caso, se procederá a realizar las correcciones pertinentes.</p>
+          <p>Como se comentó en la entrevista previa, nosotros no manejamos la compra del material requerido para los trabajos; sin embargo, podemos sugerir lugares donde se cuente con el material y quizá el mejor precio del mercado.</p>
+          <p>El costo total por los trabajos señalados asciende a la cantidad de <strong>${money.format(total)}</strong>. El anticipo requerido será de <strong>${advancePercent}%</strong> al inicio de los trabajos y el <strong>${balancePercent}%</strong> restante se cubrirá conforme al avance acordado y/o al finalizar el trabajo.</p>
+          <p>Cualquier trabajo que se requiera de manera adicional podrá realizarse, siempre y cuando sea consensuado por las partes involucradas y con autorización expresa.</p>
+          <p>Es importante mencionar que la solicitud de materiales se hará con 72 horas de anticipación al suministro del mismo, para que el usuario tenga el tiempo suficiente para realizar la compra.</p>
+          <p>Bajo ninguna circunstancia los técnicos asignados podrán retirar de las instalaciones del usuario ningún material. Los encargados de realizar compras, cambios o devoluciones en todo momento son los administradores del edificio.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="notes">
+      <p><strong>NOTA UNO:</strong> SE REQUIERE ${advancePercent}% DE ANTICIPO A LA FIRMA DEL PRESENTE DOCUMENTO, ${balancePercent}% AL MOMENTO DE LA INSTALACION,</p>
+      <p><strong>NOTA DOS:</strong> GARANTÍA EN PANELES Y EQUIPOS DE 20 AÑOS</p>
+      <p><strong>NOTA TRES:</strong> EN LA PRESENTE COTIZACIÓN NO SE INCLUYE EL COSTO DE OBRA CIVIL, EN CASO DE QUE EL PROYECTO LA REQUIERA,</p>
+      <p><strong>NOTA CUATRO:</strong> EL TRAMITE DE INTERCONEXION ESTA SUJETO A LOS TIEMPOS DE LA COMISION FEDERAL DE ELECTRICIDAD Y DEMAS DEPENDENCIAS INVOLUCRADAS</p>
+      <p><strong>NOTA:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
+      <p><strong>NOTA:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
+    </div>
+  `;
+}
+
 function generateQuotePdf(quoteId) {
   const quote = state.quoteClients.find((item) => item.id === quoteId);
   if (!quote) return;
@@ -2147,6 +2206,11 @@ function generateQuotePdf(quoteId) {
   const total = (quote.totals && quote.totals.total) || 0;
   const advancePercent = quote.advancePercent || 70;
   const balancePercent = Math.max(100 - advancePercent, 0);
+  const quoteType = quote.quoteType || "solar";
+  const quoteIntro = quoteType === "maintenance"
+    ? "Ponemos a su consideración nuestro presupuesto de mantenimiento y obra civil:"
+    : "Ponemos a su consideración nuestro presupuesto de paneles solares:";
+  const commercialTerms = quoteCommercialTerms(quoteType, total, advancePercent, balancePercent);
   const quoteDate = quote.createdAt ? new Date(quote.createdAt) : new Date();
   const userSignature = preparedBy.signature
     ? `<img class="signature-image" src="${preparedBy.signature}" alt="Firma de ${escapeHtml(preparedBy.name)}" />`
@@ -2239,8 +2303,19 @@ function generateQuotePdf(quoteId) {
           .process-step b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: #203a49; color: #eba83a; font-size: 12px; }
           .process-step strong { display: block; font-size: 12.5px; margin-bottom: 2px; }
           .process-step span { color: #4b5563; font-size: 11px; line-height: 1.35; }
+          .terms-card { margin-top: 18px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.82); overflow: hidden; }
+          .terms-summary { display: flex; justify-content: space-between; gap: 14px; align-items: center; background: #203a49; color: #ffffff; padding: 12px 14px; }
+          .terms-summary span { color: rgba(255,255,255,0.82); font-size: 9.5px; font-weight: 900; letter-spacing: 1.1px; }
+          .terms-summary strong { color: #eba83a; font-size: 17px; }
+          .payment-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #e5e7eb; }
+          .payment-grid div { padding: 10px 12px; border-right: 1px solid #e5e7eb; }
+          .payment-grid div:last-child { border-right: 0; }
+          .payment-grid span { display: block; color: #6b7280; font-size: 9px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+          .payment-grid strong { color: #17202b; font-size: 12px; }
           .notes { display: grid; gap: 7px; margin-top: 18px; line-height: 1.3; font-size: 11px; }
+          .terms-card .notes { margin-top: 0; padding: 12px; }
           .notes p { margin: 0; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.74); border: 1px solid #e5e7eb; }
+          .maintenance-terms .notes p { background: #f8fafc; border-left: 3px solid #eba83a; }
           .prepared { display: grid; gap: 5px; margin-top: 18px; font-size: 11.5px; line-height: 1.4; background: rgba(32,58,73,0.92); color: #ffffff; border-radius: 12px; padding: 15px 16px; box-shadow: none; }
           .prepared strong { color: #eba83a; }
           .signature { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 24px; font-size: 12px; }
@@ -2312,6 +2387,9 @@ function generateQuotePdf(quoteId) {
             table { font-size: 10px; }
             th, td { padding: 6px 4px; font-size: 9.5px; }
             .totals { width: 72%; }
+            .payment-grid { grid-template-columns: 1fr; }
+            .payment-grid div { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+            .payment-grid div:last-child { border-bottom: 0; }
             .annex-grid, .annex-stats { grid-template-columns: 1fr; }
             .solar-map-hero, .solar-flow, .solar-metrics, .generation-grid { grid-template-columns: 1fr; }
             .solar-arrows { display: none; }
@@ -2343,7 +2421,7 @@ function generateQuotePdf(quoteId) {
             <div class="date">${formatLongDate(quoteDate)}</div>
             <h1>${escapeHtml(quote.company || quote.contact)}</h1>
             <div class="present">PRESENTE</div>
-            <p class="intro">Ponemos a su consideración nuestro presupuesto de paneles solares:</p>
+            <p class="intro">${quoteIntro}</p>
             <div class="client-card">
               <strong>Contacto:</strong> ${escapeHtml(quote.contact)}<br>
               <strong>Teléfono:</strong> ${escapeHtml(quote.phone)}<br>
@@ -2376,14 +2454,7 @@ function generateQuotePdf(quoteId) {
               <span>${escapeHtml(preparedBy.name)}</span>
               <span>${escapeHtml(preparedBy.position || preparedBy.role)}</span>
             </div>
-            <div class="notes">
-              <p><strong>NOTA UNO:</strong> SE REQUIERE ${advancePercent}% DE ANTICIPO A LA FIRMA DEL PRESENTE DOCUMENTO, ${balancePercent}% AL MOMENTO DE LA INSTALACION,</p>
-              <p><strong>NOTA DOS:</strong> GARANTÍA EN PANELES Y EQUIPOS DE 20 AÑOS</p>
-              <p><strong>NOTA TRES:</strong> EN LA PRESENTE COTIZACIÓN NO SE INCLUYE EL COSTO DE OBRA CIVIL, EN CASO DE QUE EL PROYECTO LA REQUIERA,</p>
-              <p><strong>NOTA CUATRO:</strong> EL TRAMITE DE INTERCONEXION ESTA SUJETO A LOS TIEMPOS DE LA COMISION FEDERAL DE ELECTRICIDAD Y DEMAS DEPENDENCIAS INVOLUCRADAS</p>
-              <p><strong>NOTA:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
-              <p><strong>NOTA:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
-            </div>
+            ${commercialTerms}
             <div class="signature">
               <div class="signature-box">
                 <div class="signature-value">${formatLongDate(quoteDate)}</div>
@@ -2419,6 +2490,7 @@ function generateQuotePdf(quoteId) {
           </div>
           ${footer}
         </section>
+        ${quoteType === "solar" ? `
         <section class="page page-break">
           <div class="watermark soft"></div>
           <div class="content">
@@ -2569,6 +2641,7 @@ function generateQuotePdf(quoteId) {
           </div>
           ${footer}
         </section>
+        ` : ""}
         <script>window.addEventListener("load", () => setTimeout(() => window.print(), 250));</script>
       </body>
     </html>

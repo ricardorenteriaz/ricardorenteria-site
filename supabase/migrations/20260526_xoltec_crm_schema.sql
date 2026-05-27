@@ -38,6 +38,7 @@ create table if not exists public.quotes (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete cascade,
   prepared_by uuid references public.profiles(id) on delete set null,
+  quote_type text not null default 'solar',
   company text not null default '',
   tax_id text not null default '',
   contact text not null default '',
