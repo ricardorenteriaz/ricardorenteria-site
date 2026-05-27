@@ -31,36 +31,42 @@ const starterProductCatalog = [
   {
     id: "panel-longi-640",
     name: "Panel solar marca SOL LONGI Mod 640 HIMO 6 NYTPE",
+    workArea: "Generación fotovoltaica",
     price: 4800,
     defaultQuantity: 14,
   },
   {
     id: "inversor-growatt-max-9000",
     name: "Inversor GROWAT MAX 9,000 KW Mod TL",
+    workArea: "Conversión eléctrica",
     price: 16000,
     defaultQuantity: 1,
   },
   {
     id: "kit-estructural-ajustable",
     name: "KIT estructural Ajustable a 14 paneles solares",
+    workArea: "Estructura y montaje",
     price: 15500,
     defaultQuantity: 1,
   },
   {
     id: "cables-conectores-accesorios",
     name: "Cables conectores, accesorios eléctricos",
+    workArea: "Instalación eléctrica",
     price: 12350,
     defaultQuantity: 1,
   },
   {
     id: "tramites-gestorias",
     name: "Tramites y Gestorías",
+    workArea: "Gestión CFE",
     price: 5500,
     defaultQuantity: 1,
   },
   {
     id: "mano-obra",
     name: "Mano de Obra",
+    workArea: "Mano de obra",
     price: 20500,
     defaultQuantity: 1,
   },
@@ -393,11 +399,7 @@ async function loadSupabaseState() {
   if (!supabaseClient) return;
 
   const [productsResult, quotesResult, dealsResult, tasksResult, profilesResult] = await Promise.all([
-    supabaseClient
-      .from("products")
-      .select("id, legacy_id, name, price, default_quantity")
-      .eq("active", true)
-      .order("created_at", { ascending: true }),
+    fetchSupabaseProducts(),
     supabaseClient
       .from("quotes")
       .select("*, quote_items(*)")
@@ -424,11 +426,30 @@ async function loadSupabaseState() {
   render();
 }
 
+async function fetchSupabaseProducts() {
+  const result = await supabaseClient
+    .from("products")
+    .select("id, legacy_id, name, work_area, price, default_quantity")
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+
+  if (!result.error || !String(result.error.message || "").includes("work_area")) {
+    return result;
+  }
+
+  return supabaseClient
+    .from("products")
+    .select("id, legacy_id, name, price, default_quantity")
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+}
+
 function dbProductToLocal(product) {
   return {
     id: product.id,
     legacyId: product.legacy_id,
     name: product.name,
+    workArea: product.work_area || "",
     price: Number(product.price) || 0,
     defaultQuantity: Number(product.default_quantity) || 1,
   };
@@ -440,6 +461,7 @@ function dbQuoteToLocal(quote) {
     .map((item) => ({
       id: item.product_id || item.legacy_product_id || item.id,
       name: item.name,
+      workArea: item.work_area || "",
       basePrice: Number(item.base_price) || Number(item.price) || 0,
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
@@ -1011,6 +1033,7 @@ async function saveSupabaseQuote(quote, isEditing) {
     product_id: isUuid(product.id) ? product.id : null,
     legacy_product_id: product.legacyId || (!isUuid(product.id) ? product.id : null),
     name: product.name,
+    work_area: product.workArea || "",
     base_price: product.basePrice || product.price,
     price: product.price,
     quantity: product.quantity,
@@ -1022,7 +1045,12 @@ async function saveSupabaseQuote(quote, isEditing) {
     sort_order: index,
   }));
 
-  const { error: itemsError } = await supabaseClient.from("quote_items").insert(items);
+  let { error: itemsError } = await supabaseClient.from("quote_items").insert(items);
+  if (itemsError && String(itemsError.message || "").includes("work_area")) {
+    const fallbackItems = items.map(({ work_area, ...item }) => item);
+    const fallbackResult = await supabaseClient.from("quote_items").insert(fallbackItems);
+    itemsError = fallbackResult.error;
+  }
   if (itemsError) {
     window.alert(`Guardé la cotización, pero no pude guardar sus conceptos: ${itemsError.message}`);
     return null;
@@ -1060,7 +1088,10 @@ function renderQuoteProducts() {
         <article class="quote-product-row">
           <label class="checkbox-row">
             <input class="quote-product-check" data-product-id="${product.id}" type="checkbox" />
-            <span>${escapeHtml(product.name)}</span>
+            <span>
+              ${escapeHtml(product.name)}
+              <small>Área a trabajar: ${escapeHtml(product.workArea || "Sin especificar")}</small>
+            </span>
           </label>
           <label class="quote-price-input">
             Precio
@@ -1290,6 +1321,7 @@ async function addProduct(event) {
   const product = {
     id: editingProductId || createId(),
     name: document.querySelector("#product-name").value.trim(),
+    workArea: document.querySelector("#product-work-area").value.trim(),
     price: Number(document.querySelector("#product-price").value) || 0,
     defaultQuantity: Math.max(Number(document.querySelector("#product-quantity").value) || 1, 1),
   };
@@ -1318,6 +1350,7 @@ async function saveSupabaseProduct(product, isEditing) {
     organization_id: XOLTEC_ORGANIZATION_ID,
     legacy_id: product.legacyId || (isEditing ? null : product.id),
     name: product.name,
+    work_area: product.workArea || "",
     price: product.price,
     default_quantity: product.defaultQuantity,
     active: true,
@@ -1326,7 +1359,18 @@ async function saveSupabaseProduct(product, isEditing) {
   const query = isEditing
     ? supabaseClient.from("products").update(payload).eq("id", product.id).select().single()
     : supabaseClient.from("products").insert(payload).select().single();
-  const { data, error } = await query;
+  let { data, error } = await query;
+
+  if (error && String(error.message || "").includes("work_area")) {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.work_area;
+    const fallbackQuery = isEditing
+      ? supabaseClient.from("products").update(fallbackPayload).eq("id", product.id).select().single()
+      : supabaseClient.from("products").insert(fallbackPayload).select().single();
+    const fallbackResult = await fallbackQuery;
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     window.alert(`No pude guardar el producto en Supabase: ${error.message}`);
@@ -1342,6 +1386,7 @@ function editProduct(productId) {
 
   editingProductId = product.id;
   document.querySelector("#product-name").value = product.name || "";
+  document.querySelector("#product-work-area").value = product.workArea || "";
   document.querySelector("#product-price").value = product.price || 0;
   document.querySelector("#product-quantity").value = product.defaultQuantity || 1;
   updateProductFormMode();
@@ -1375,6 +1420,7 @@ function renderProductsCatalog() {
           <article class="product-card">
             <strong>${escapeHtml(product.name)}</strong>
             <div class="deal-meta">
+              <span>Área: ${escapeHtml(product.workArea || "Sin especificar")}</span>
               <span>${money.format(product.price)}</span>
               <span>Cantidad sugerida: ${product.defaultQuantity}</span>
             </div>
@@ -1821,7 +1867,7 @@ function filteredProducts() {
   const query = searchQuery();
   if (!query) return state.products;
   return state.products.filter((product) =>
-    matchesSearch([product.name, product.price, product.defaultQuantity].join(" "), query),
+    matchesSearch([product.name, product.workArea, product.price, product.defaultQuantity].join(" "), query),
   );
 }
 
@@ -1851,7 +1897,7 @@ function quoteSearchText(client) {
   const fiscalAddress = formatAddress(client.fiscalAddress, client.address);
   const installationAddress = formatAddress(client.installationAddress);
   const productText = (client.products || [])
-    .map((product) => [product.name, product.quantity, product.price, product.total].join(" "))
+    .map((product) => [product.name, product.workArea, product.quantity, product.price, product.total].join(" "))
     .join(" ");
   const preparedBy = state.users.find((user) => user.user === client.preparedByUser);
   return [
@@ -2075,6 +2121,7 @@ function generateQuotePdf(quoteId) {
       (product) => `
         <tr>
           <td>${escapeHtml(product.name)}</td>
+          <td>${escapeHtml(product.workArea || "Sin especificar")}</td>
           <td>${product.quantity}</td>
           <td>${money.format(product.price)}</td>
           <td>${money.format(product.lineTotal)}</td>
@@ -2120,8 +2167,8 @@ function generateQuotePdf(quoteId) {
           table { width: 100%; border-collapse: collapse; margin-top: 0; background: transparent; border: 1px solid #6b7280; border-radius: 0; overflow: visible; }
           th { background-color: #bfbfbf !important; color: #111827; font-size: 11px; letter-spacing: 0.3px; padding: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           td { border: 1px solid rgba(31,41,55,0.58); background: transparent; padding: 8px; font-size: 11.5px; }
-          td:nth-child(2), td:nth-child(3) { text-align: center; white-space: nowrap; }
-          td:nth-child(4) { text-align: right; white-space: nowrap; }
+          td:nth-child(3), td:nth-child(4) { text-align: center; white-space: nowrap; }
+          td:nth-child(5) { text-align: right; white-space: nowrap; }
           .totals { width: 38%; margin-left: auto; margin-top: 16px; background: transparent; border: 0; border-radius: 0; padding: 6px 13px; box-shadow: none; }
           .totals div { display: flex; justify-content: space-between; font-weight: 700; padding: 4px 0; font-size: 12px; }
           .totals div:last-child { border-top: 1px solid #d7dde5; margin-top: 4px; padding-top: 8px; color: #0f766e; font-size: 14px; }
@@ -2272,7 +2319,7 @@ function generateQuotePdf(quoteId) {
             </div>
             <table>
               <thead>
-                <tr><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>PRECIO UNITARIO</th><th>TOTALES</th></tr>
+                <tr><th>DESCRIPCIÓN</th><th>ÁREA A TRABAJAR</th><th>CANTIDAD</th><th>PRECIO UNITARIO</th><th>TOTALES</th></tr>
               </thead>
               <tbody>${rows}</tbody>
             </table>
