@@ -32,6 +32,7 @@ const starterProductCatalog = [
     id: "panel-longi-640",
     name: "Panel solar marca SOL LONGI Mod 640 HIMO 6 NYTPE",
     workArea: "Generación fotovoltaica",
+    isLot: false,
     price: 4800,
     defaultQuantity: 14,
   },
@@ -39,6 +40,7 @@ const starterProductCatalog = [
     id: "inversor-growatt-max-9000",
     name: "Inversor GROWAT MAX 9,000 KW Mod TL",
     workArea: "Conversión eléctrica",
+    isLot: false,
     price: 16000,
     defaultQuantity: 1,
   },
@@ -46,6 +48,7 @@ const starterProductCatalog = [
     id: "kit-estructural-ajustable",
     name: "KIT estructural Ajustable a 14 paneles solares",
     workArea: "Estructura y montaje",
+    isLot: true,
     price: 15500,
     defaultQuantity: 1,
   },
@@ -53,6 +56,7 @@ const starterProductCatalog = [
     id: "cables-conectores-accesorios",
     name: "Cables conectores, accesorios eléctricos",
     workArea: "Instalación eléctrica",
+    isLot: true,
     price: 12350,
     defaultQuantity: 1,
   },
@@ -60,6 +64,7 @@ const starterProductCatalog = [
     id: "tramites-gestorias",
     name: "Tramites y Gestorías",
     workArea: "Gestión CFE",
+    isLot: true,
     price: 5500,
     defaultQuantity: 1,
   },
@@ -67,6 +72,7 @@ const starterProductCatalog = [
     id: "mano-obra",
     name: "Mano de Obra",
     workArea: "Mano de obra",
+    isLot: true,
     price: 20500,
     defaultQuantity: 1,
   },
@@ -429,11 +435,11 @@ async function loadSupabaseState() {
 async function fetchSupabaseProducts() {
   const result = await supabaseClient
     .from("products")
-    .select("id, legacy_id, name, work_area, price, default_quantity")
+    .select("id, legacy_id, name, work_area, is_lot, price, default_quantity")
     .eq("active", true)
     .order("created_at", { ascending: true });
 
-  if (!result.error || !String(result.error.message || "").includes("work_area")) {
+  if (!result.error || !isMissingOptionalProductColumn(result.error)) {
     return result;
   }
 
@@ -444,12 +450,18 @@ async function fetchSupabaseProducts() {
     .order("created_at", { ascending: true });
 }
 
+function isMissingOptionalProductColumn(error) {
+  const message = String((error && error.message) || "");
+  return message.includes("work_area") || message.includes("is_lot");
+}
+
 function dbProductToLocal(product) {
   return {
     id: product.id,
     legacyId: product.legacy_id,
     name: product.name,
     workArea: product.work_area || "",
+    isLot: Boolean(product.is_lot),
     price: Number(product.price) || 0,
     defaultQuantity: Number(product.default_quantity) || 1,
   };
@@ -462,6 +474,7 @@ function dbQuoteToLocal(quote) {
       id: item.product_id || item.legacy_product_id || item.id,
       name: item.name,
       workArea: item.work_area || "",
+      isLot: Boolean(item.is_lot),
       basePrice: Number(item.base_price) || Number(item.price) || 0,
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
@@ -1034,6 +1047,7 @@ async function saveSupabaseQuote(quote, isEditing) {
     legacy_product_id: product.legacyId || (!isUuid(product.id) ? product.id : null),
     name: product.name,
     work_area: product.workArea || "",
+    is_lot: Boolean(product.isLot),
     base_price: product.basePrice || product.price,
     price: product.price,
     quantity: product.quantity,
@@ -1046,8 +1060,8 @@ async function saveSupabaseQuote(quote, isEditing) {
   }));
 
   let { error: itemsError } = await supabaseClient.from("quote_items").insert(items);
-  if (itemsError && String(itemsError.message || "").includes("work_area")) {
-    const fallbackItems = items.map(({ work_area, ...item }) => item);
+  if (itemsError && isMissingOptionalProductColumn(itemsError)) {
+    const fallbackItems = items.map(({ work_area, is_lot, ...item }) => item);
     const fallbackResult = await supabaseClient.from("quote_items").insert(fallbackItems);
     itemsError = fallbackResult.error;
   }
@@ -1098,7 +1112,7 @@ function renderQuoteProducts() {
             <input class="quote-product-price-input" data-product-id="${product.id}" type="number" min="0" step="0.01" value="${product.price}" ${pricesUnlocked ? "" : "disabled"} />
           </label>
           <label class="quote-quantity">
-            Cant.
+            ${product.isLot ? "Lote" : "Cant."}
             <input class="quote-product-quantity" data-product-id="${product.id}" type="number" min="1" step="1" value="${product.defaultQuantity}" />
           </label>
         </article>
@@ -1276,6 +1290,7 @@ function selectedQuoteProducts() {
         basePrice,
         price,
         quantity,
+        isLot: Boolean(product.isLot),
         baseLineTotal,
         lineTotal,
         commissionAdjustmentPercent,
@@ -1301,6 +1316,11 @@ function calculateQuoteTotals(products) {
     iva,
     total: taxableSubtotal + iva,
   };
+}
+
+function formatProductQuantity(product) {
+  const quantity = Number(product && product.quantity) || Number(product && product.defaultQuantity) || 1;
+  return product && product.isLot ? `${quantity} LOTE` : String(quantity);
 }
 
 function commissionPriceAdjustmentPercent() {
@@ -1332,6 +1352,7 @@ async function addProduct(event) {
     id: editingProductId || createId(),
     name: document.querySelector("#product-name").value.trim(),
     workArea: document.querySelector("#product-work-area").value.trim(),
+    isLot: document.querySelector("#product-is-lot").checked,
     price: Number(document.querySelector("#product-price").value) || 0,
     defaultQuantity: Math.max(Number(document.querySelector("#product-quantity").value) || 1, 1),
   };
@@ -1361,6 +1382,7 @@ async function saveSupabaseProduct(product, isEditing) {
     legacy_id: product.legacyId || (isEditing ? null : product.id),
     name: product.name,
     work_area: product.workArea || "",
+    is_lot: Boolean(product.isLot),
     price: product.price,
     default_quantity: product.defaultQuantity,
     active: true,
@@ -1371,9 +1393,10 @@ async function saveSupabaseProduct(product, isEditing) {
     : supabaseClient.from("products").insert(payload).select().single();
   let { data, error } = await query;
 
-  if (error && String(error.message || "").includes("work_area")) {
+  if (error && isMissingOptionalProductColumn(error)) {
     const fallbackPayload = { ...payload };
     delete fallbackPayload.work_area;
+    delete fallbackPayload.is_lot;
     const fallbackQuery = isEditing
       ? supabaseClient.from("products").update(fallbackPayload).eq("id", product.id).select().single()
       : supabaseClient.from("products").insert(fallbackPayload).select().single();
@@ -1397,6 +1420,7 @@ function editProduct(productId) {
   editingProductId = product.id;
   document.querySelector("#product-name").value = product.name || "";
   document.querySelector("#product-work-area").value = product.workArea || "";
+  document.querySelector("#product-is-lot").checked = Boolean(product.isLot);
   document.querySelector("#product-price").value = product.price || 0;
   document.querySelector("#product-quantity").value = product.defaultQuantity || 1;
   updateProductFormMode();
@@ -1407,6 +1431,7 @@ function resetProductForm() {
   editingProductId = null;
   document.querySelector("#product-form").reset();
   document.querySelector("#product-quantity").value = 1;
+  document.querySelector("#product-is-lot").checked = false;
   updateProductFormMode();
 }
 
@@ -1432,7 +1457,7 @@ function renderProductsCatalog() {
             <div class="deal-meta">
               <span>Área: ${escapeHtml(product.workArea || "Sin especificar")}</span>
               <span>${money.format(product.price)}</span>
-              <span>Cantidad sugerida: ${product.defaultQuantity}</span>
+              <span>Cantidad sugerida: ${formatProductQuantity(product)}</span>
             </div>
             <div class="quote-card-actions">
               <button class="ghost-button" data-edit-product="${product.id}" type="button">Editar</button>
@@ -1993,7 +2018,7 @@ function quoteClientCard(client) {
         ${client.notes ? quoteDetailRow("Observaciones:", client.notes) : ""}
       </div>
       <div class="quote-card-products">
-        ${products.map((product) => `<span>${escapeHtml(product.name)} x ${product.quantity}</span>`).join("")}
+        ${products.map((product) => `<span>${escapeHtml(product.name)} x ${escapeHtml(formatProductQuantity(product))}</span>`).join("")}
       </div>
       <div class="quote-card-total">
         <span>Descuento ${client.discountPercent || 0}%</span>
@@ -2063,7 +2088,7 @@ function shareQuoteByEmail(quoteId) {
 
 function quoteShareMessage(quote, channel) {
   const products = (quote.products || [])
-    .map((product) => `- ${product.name} x ${product.quantity}`)
+    .map((product) => `- ${product.name} x ${formatProductQuantity(product)}`)
     .join("\n");
   const intro = channel === "email" ? "Hola," : `Hola ${quote.contact || ""},`.trim();
   return [
@@ -2132,7 +2157,7 @@ function generateQuotePdf(quoteId) {
         <tr>
           <td>${escapeHtml(product.name)}</td>
           <td>${escapeHtml(product.workArea || "Sin especificar")}</td>
-          <td>${product.quantity}</td>
+          <td>${escapeHtml(formatProductQuantity(product))}</td>
           <td>${money.format(product.price)}</td>
           <td>${money.format(product.lineTotal)}</td>
         </tr>

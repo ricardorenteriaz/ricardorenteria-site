@@ -716,6 +716,12 @@ menu {
   font-weight: 750;
 }
 
+.form-checkbox-row {
+  justify-content: flex-start;
+  margin-top: -2px;
+  padding: 4px 0;
+}
+
 .quotes-layout {
   display: grid;
   grid-template-columns: minmax(340px, 0.85fr) minmax(360px, 1.15fr);
