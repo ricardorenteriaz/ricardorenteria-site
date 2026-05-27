@@ -297,8 +297,8 @@ async function restoreSupabaseSession() {
 
 async function login(event) {
   event.preventDefault();
-  const user = document.querySelector("#login-user").value.trim();
-  const password = document.querySelector("#login-password").value;
+  const user = document.querySelector("#login-user").value.trim().toLowerCase();
+  const password = cleanPassword(document.querySelector("#login-password").value);
   const error = document.querySelector("#auth-error");
 
   if (supabaseClient && user.includes("@")) {
@@ -309,7 +309,7 @@ async function login(event) {
     });
 
     if (authError || !data.user) {
-      error.textContent = authError ? authError.message : "No pude iniciar sesión en Supabase.";
+      error.textContent = friendlyAuthError(authError);
       return;
     }
 
@@ -1342,6 +1342,21 @@ function quoteTypeLabel(type) {
   return type === "maintenance" ? "Mantenimiento y obra civil" : "Paneles solares";
 }
 
+function cleanPassword(value) {
+  return String(value || "").trim();
+}
+
+function friendlyAuthError(error) {
+  const message = String((error && error.message) || "");
+  if (message === "Invalid login credentials") {
+    return "Correo o contraseña incorrectos. En el lab debes entrar con el correo completo y la contraseña exacta creada en Usuarios.";
+  }
+  if (message === "Email not confirmed") {
+    return "Ese correo todavía no está confirmado en Supabase.";
+  }
+  return message || "No pude iniciar sesión en Supabase.";
+}
+
 function commissionPriceAdjustmentPercent() {
   const percent = Math.min(
     Math.max(Number(document.querySelector("#quote-commission-percent").value) || 0, 0),
@@ -1515,7 +1530,7 @@ async function addUser(event) {
   const updatedUser = {
     id: existingUser && existingUser.id,
     user,
-    password: document.querySelector("#new-user-password").value,
+    password: cleanPassword(document.querySelector("#new-user-password").value),
     name: document.querySelector("#new-user-name").value.trim().toUpperCase(),
     position: document.querySelector("#new-user-position").value.trim().toUpperCase(),
     signature: currentSignature,
@@ -1549,6 +1564,9 @@ async function addUser(event) {
   resetUserForm();
   renderUsers();
   syncAuthView();
+  if (!editingUserName && isSupabaseSession()) {
+    window.alert(`Usuario creado. Para entrar usa el correo ${updatedUser.user} y la contraseña que acabas de asignar.`);
+  }
 }
 
 async function saveSupabaseUser(user, isEditing) {
