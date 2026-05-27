@@ -83,7 +83,6 @@ Deno.serve(async (request) => {
       metadata: {
         external_reference: reference,
         customer_info: { name, email },
-        source: "ricardorenteria.pro",
       },
       custom_payment_options: {
         international_enabled: false,
