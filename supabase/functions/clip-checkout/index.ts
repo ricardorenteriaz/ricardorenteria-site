@@ -110,6 +110,11 @@ Deno.serve(async (request) => {
     return jsonResponse({
       paymentUrl: clipBody.payment_request_url || clipBody.checkout_url || clipBody.url,
       paymentRequestId: clipBody.payment_request_id,
+      reference,
+      amount: payload.amount,
+      concept,
+      name,
+      email,
       raw: clipBody,
     });
   } catch (error) {

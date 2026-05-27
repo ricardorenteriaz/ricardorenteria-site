@@ -133,8 +133,9 @@
       </div>
     </section>
 
-    <section class="section payment-result hidden" data-payment-result aria-live="polite">
+    <section class="payment-result-modal hidden" data-payment-result aria-live="polite" role="dialog" aria-modal="true">
       <div class="payment-result-card">
+        <button class="payment-result-close" type="button" data-close-payment-result aria-label="Cerrar comprobante">&times;</button>
         <div>
           <p class="eyebrow" data-i18n="paymentSuccessEyebrow">Payment confirmed</p>
           <h2 data-i18n="paymentSuccessTitle">Your payment was approved.</h2>

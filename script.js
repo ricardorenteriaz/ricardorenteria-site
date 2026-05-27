@@ -56,8 +56,10 @@ const paymentButtonImage = document.querySelector("[data-payment-button-image]")
 const paymentButton = document.querySelector(".clip-pay-button");
 const paymentResult = document.querySelector("[data-payment-result]");
 const downloadReceiptButton = document.querySelector("[data-download-receipt]");
+const closePaymentResultButton = document.querySelector("[data-close-payment-result]");
 const clipCheckoutEndpoint = window.RR_CLIP_CHECKOUT_ENDPOINT || "https://itpdqkumkgaossbfhqhp.supabase.co/functions/v1/clip-checkout";
 let currentLanguage = localStorage.getItem("preferredLanguage") || "en";
+let activeReceiptPayment = null;
 
 function applyLanguage(language) {
   currentLanguage = language;
@@ -133,7 +135,9 @@ async function handlePaymentRequest(event) {
     });
     const result = await response.json();
     if (!response.ok || !result.paymentUrl) throw new Error(result.error || "Payment link error");
-    sessionStorage.setItem("rrz-last-payment", JSON.stringify({ ...data, paymentRequestId: result.paymentRequestId, paymentUrl: result.paymentUrl, createdAt: new Date().toISOString() }));
+    const paymentRecord = { ...data, reference: result.reference, paymentRequestId: result.paymentRequestId, paymentUrl: result.paymentUrl, createdAt: new Date().toISOString() };
+    localStorage.setItem(`rrz-payment-${result.reference}`, JSON.stringify(paymentRecord));
+    localStorage.setItem("rrz-last-payment-reference", result.reference);
     window.location.href = result.paymentUrl;
   } catch (error) {
     setPaymentFeedback("paymentError");
@@ -144,12 +148,25 @@ function getPaymentResult() {
   return new URLSearchParams(window.location.search).get("payment");
 }
 
+function getPaymentReference() {
+  return new URLSearchParams(window.location.search).get("reference") || "";
+}
+
 function getStoredPayment() {
-  try {
-    return JSON.parse(sessionStorage.getItem("rrz-last-payment") || "{}");
-  } catch (error) {
-    return {};
+  const reference = getPaymentReference() || localStorage.getItem("rrz-last-payment-reference") || "";
+  const candidates = [
+    reference ? localStorage.getItem(`rrz-payment-${reference}`) : "",
+    localStorage.getItem("rrz-last-payment-reference") ? localStorage.getItem(`rrz-payment-${localStorage.getItem("rrz-last-payment-reference")}`) : "",
+    sessionStorage.getItem("rrz-last-payment") || "",
+  ];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object") return { reference, ...parsed };
+    } catch (error) {}
   }
+  return { reference };
 }
 
 function cleanPdfText(value) {
@@ -166,6 +183,7 @@ function escapePdfText(value) {
 
 function formatMoney(amount) {
   const value = Number(amount || 0);
+  if (!Number.isFinite(value) || value <= 0) return "N/D";
   return value.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 }
 
@@ -174,74 +192,78 @@ function formatDateTime(value) {
   return date.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
 }
 
-async function loadLogoData() {
-  const image = new Image();
-  image.crossOrigin = "anonymous";
-  image.src = "logo3.png";
-  await new Promise((resolve, reject) => {
-    image.onload = resolve;
-    image.onerror = reject;
+function splitPdfText(text, maxLength = 76) {
+  const words = cleanPdfText(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  words.forEach((word) => {
+    if ((line + " " + word).trim().length > maxLength) {
+      if (line) lines.push(line);
+      line = word;
+    } else {
+      line = (line + " " + word).trim();
+    }
   });
-  const canvas = document.createElement("canvas");
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  canvas.getContext("2d").drawImage(image, 0, 0);
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
-  return {
-    binary: atob(dataUrl.split(",")[1]),
-    width: image.naturalWidth,
-    height: image.naturalHeight,
-  };
+  if (line) lines.push(line);
+  return lines.length ? lines : ["N/D"];
 }
 
-function buildReceiptPdf(payment, logo) {
+function buildReceiptPdf(payment) {
   const pageWidth = 595;
   const pageHeight = 842;
-  const lines = [
-    { text: "COMPROBANTE DE PAGO", x: 56, y: 710, size: 22 },
-    { text: "Ricardo Renteria | Business Operations, CRM & IT", x: 56, y: 682, size: 11 },
-    { text: "renteriamba@gmail.com | WhatsApp +52 729 474 5365 | ricardorenteria.pro", x: 56, y: 664, size: 9 },
-    { text: "", x: 56, y: 638, size: 10 },
-    { text: "Estado: Pago aprobado mediante Checkout Clip", x: 56, y: 620, size: 12 },
-    { text: "Fecha de emision: " + formatDateTime(new Date()), x: 56, y: 596, size: 10 },
-    { text: "Fecha de solicitud: " + formatDateTime(payment.createdAt), x: 56, y: 578, size: 10 },
-    { text: "Referencia interna: " + (new URLSearchParams(window.location.search).get("reference") || "N/D"), x: 56, y: 560, size: 10 },
-    { text: "Payment Request ID: " + (payment.paymentRequestId || "N/D"), x: 56, y: 542, size: 10 },
-    { text: "", x: 56, y: 516, size: 10 },
-    { text: "Cliente: " + (payment.name || "N/D"), x: 56, y: 496, size: 11 },
-    { text: "Correo: " + (payment.email || "N/D"), x: 56, y: 476, size: 10 },
-    { text: "Concepto: " + (payment.concept || "Servicio profesional"), x: 56, y: 456, size: 10 },
-    { text: "Monto pagado: " + formatMoney(payment.amount), x: 56, y: 430, size: 16 },
-    { text: "", x: 56, y: 400, size: 10 },
-    { text: "Este comprobante confirma la recepcion del pago realizado en Clip.", x: 56, y: 378, size: 9 },
-    { text: "No sustituye una factura fiscal. Si necesitas factura, contacta a Ricardo Renteria.", x: 56, y: 362, size: 9 },
+  const reference = payment.reference || getPaymentReference() || "N/D";
+  const receiptId = payment.paymentRequestId || "N/D";
+  const detailRows = [
+    ["Estado", "Pago aprobado mediante Checkout Clip"],
+    ["Fecha de emision", formatDateTime(new Date())],
+    ["Fecha de solicitud", payment.createdAt ? formatDateTime(payment.createdAt) : "N/D"],
+    ["Referencia interna", reference],
+    ["Payment Request ID", receiptId],
+    ["Cliente", payment.name || "N/D"],
+    ["Correo", payment.email || "N/D"],
+    ["Concepto", payment.concept || "Servicio profesional"],
   ];
 
   const objects = [];
   objects.push("<< /Type /Catalog /Pages 2 0 R >>");
   objects.push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidth + " " + pageHeight + "] /Resources << /Font << /F1 4 0 R >>" + (logo ? " /XObject << /Im1 5 0 R >>" : "") + " >> /Contents " + (logo ? "6" : "5") + " 0 R >>");
+  objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidth + " " + pageHeight + "] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>");
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-  let content = "0.96 0.97 0.99 rg 0 0 " + pageWidth + " " + pageHeight + " re f\n";
-  content += "0.05 0.07 0.10 rg 0 " + (pageHeight - 128) + " " + pageWidth + " 128 re f\n";
-  content += "0.93 0.35 0.12 rg 56 642 120 3 re f\n";
-  if (logo) {
-    const logoWidth = 150;
-    const logoHeight = Math.min(72, logoWidth * (logo.height / logo.width));
-    content += "q " + logoWidth + " 0 0 " + logoHeight + " 390 735 cm /Im1 Do Q\n";
-  }
-  lines.forEach((line) => {
-    if (!line.text) return;
-    const isHeader = line.y > 650;
-    content += "BT /F1 " + line.size + " Tf " + (isHeader ? "1 1 1" : "0.10 0.13 0.18") + " rg " + line.x + " " + line.y + " Td (" + escapePdfText(line.text) + ") Tj ET\n";
+  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+
+  let content = "0.97 0.98 1 rg 0 0 " + pageWidth + " " + pageHeight + " re f\n";
+  content += "0.05 0.07 0.10 rg 0 718 " + pageWidth + " 124 re f\n";
+  content += "0.95 0.26 0.08 rg 0 718 12 124 re f\n";
+  content += "0.95 0.26 0.08 rg 56 690 132 3 re f\n";
+  content += "BT /F2 28 Tf 1 1 1 rg 56 770 Td (RICARDO RENTERIA) Tj ET\n";
+  content += "BT /F1 10 Tf 0.80 0.86 0.93 rg 58 750 Td (Business Operations | CRM | IT Systems | Landing Pages) Tj ET\n";
+  content += "BT /F1 9 Tf 0.80 0.86 0.93 rg 58 732 Td (renteriamba@gmail.com | WhatsApp +52 729 474 5365 | ricardorenteria.pro) Tj ET\n";
+
+  content += "0.92 0.96 0.95 rg 56 632 483 56 re f\n";
+  content += "0.31 0.80 0.77 RG 56 632 483 56 re S\n";
+  content += "BT /F2 18 Tf 0.05 0.10 0.13 rg 78 665 Td (COMPROBANTE DE PAGO APROBADO) Tj ET\n";
+  content += "BT /F1 9 Tf 0.25 0.32 0.40 rg 78 648 Td (Emitido automaticamente despues de la aprobacion del pago en Clip.) Tj ET\n";
+
+  content += "0.95 0.26 0.08 rg 56 575 483 34 re f\n";
+  content += "BT /F2 18 Tf 1 1 1 rg 78 588 Td (Monto pagado: " + escapePdfText(formatMoney(payment.amount)) + ") Tj ET\n";
+
+  let y = 540;
+  detailRows.forEach(([label, value]) => {
+    const valueLines = splitPdfText(value, 64);
+    content += "BT /F2 9 Tf 0.34 0.40 0.49 rg 78 " + y + " Td (" + escapePdfText(label.toUpperCase()) + ") Tj ET\n";
+    y -= 15;
+    valueLines.forEach((line) => {
+      content += "BT /F1 11 Tf 0.09 0.12 0.16 rg 78 " + y + " Td (" + escapePdfText(line) + ") Tj ET\n";
+      y -= 15;
+    });
+    y -= 8;
   });
-  content += "0.82 0.85 0.90 RG 56 322 483 0.8 w 0 0 m S\n";
 
-  if (logo) {
-    objects.push("<< /Type /XObject /Subtype /Image /Width " + logo.width + " /Height " + logo.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + logo.binary.length + " >>\nstream\n" + logo.binary + "\nendstream");
-  }
+  content += "0.82 0.85 0.90 RG 56 142 483 0.8 w 0 0 m S\n";
+  content += "BT /F1 8 Tf 0.38 0.44 0.52 rg 56 120 Td (Este comprobante confirma la recepcion del pago realizado mediante Checkout Clip.) Tj ET\n";
+  content += "BT /F1 8 Tf 0.38 0.44 0.52 rg 56 106 Td (No sustituye una factura fiscal. Si necesitas factura, contacta a Ricardo Renteria.) Tj ET\n";
+
   objects.push("<< /Length " + content.length + " >>\nstream\n" + content + "endstream");
-
   let pdf = "%PDF-1.4\n";
   const offsets = [0];
   objects.forEach((object, index) => {
@@ -255,32 +277,35 @@ function buildReceiptPdf(payment, logo) {
   return new Blob([Uint8Array.from(pdf, (char) => char.charCodeAt(0))], { type: "application/pdf" });
 }
 
-async function downloadReceiptPdf() {
-  const payment = getStoredPayment();
-  let logo = null;
-  try {
-    logo = await loadLogoData();
-  } catch (error) {
-    logo = null;
-  }
-  const blob = buildReceiptPdf(payment, logo);
+function downloadReceiptPdf() {
+  const payment = activeReceiptPayment || getStoredPayment();
+  const blob = buildReceiptPdf(payment);
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "comprobante-ricardo-renteria-" + (payment.paymentRequestId || Date.now()) + ".pdf";
+  link.download = "comprobante-ricardo-renteria-" + (payment.paymentRequestId || payment.reference || Date.now()) + ".pdf";
   document.body.appendChild(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(link.href);
 }
 
+function closePaymentResult() {
+  if (paymentResult) paymentResult.classList.add("hidden");
+  document.body.classList.remove("modal-open");
+}
+
 function showPaymentResultIfNeeded() {
   const result = getPaymentResult();
   if (result !== "success" || !paymentResult) return;
+  activeReceiptPayment = getStoredPayment();
   paymentResult.classList.remove("hidden");
-  paymentResult.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.body.classList.add("modal-open");
+  history.replaceState({}, document.title, window.location.pathname || "/");
 }
 
 downloadReceiptButton?.addEventListener("click", downloadReceiptPdf);
+closePaymentResultButton?.addEventListener("click", closePaymentResult);
+paymentResult?.addEventListener("click", (event) => { if (event.target === paymentResult) closePaymentResult(); });
 showPaymentResultIfNeeded();
 
 if (paymentForm) paymentForm.addEventListener("submit", handlePaymentRequest);
