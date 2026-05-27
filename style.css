@@ -663,6 +663,47 @@ footer {
   grid-column: 1 / -1;
 }
 
+.payment-result.hidden {
+  display: none;
+}
+
+.payment-result {
+  padding-top: 36px;
+}
+
+.payment-result-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  border: 1px solid rgba(78, 205, 196, 0.32);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(78, 205, 196, 0.16), transparent 44%),
+    rgba(18, 24, 33, 0.94);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
+  padding: clamp(24px, 4vw, 42px);
+}
+
+.payment-result-card h2 {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 1.06;
+}
+
+.payment-result-card p:not(.eyebrow) {
+  max-width: 720px;
+  margin: 0;
+  color: var(--soft);
+}
+
+.payment-result-actions {
+  display: grid;
+  gap: 12px;
+  min-width: min(280px, 100%);
+}
+
 .skills-grid {
   display: flex;
   flex-wrap: wrap;
@@ -829,6 +870,7 @@ footer p {
   .live-project-card,
   .payment-card,
   .payment-form,
+  .payment-result-card,
   .contact-panel {
     grid-template-columns: 1fr;
   }

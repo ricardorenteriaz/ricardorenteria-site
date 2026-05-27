@@ -18,7 +18,7 @@ const translations = {
     projectCrmEyebrow: "Product", projectCrmTitle: "Custom CRM Systems", projectCrmBody: "I build CRM systems around the client's real workflow, like a tailored suit: clean pipelines, useful dashboards, organized contacts, quote workflows, and tools that match how the business actually sells and follows up.",
     projectLandingEyebrow: "Product", projectLandingTitle: "Landing Pages", projectLandingBody: "I create focused landing pages for professionals and businesses that need a polished online presence, a clear offer, strong contact paths, and a design that feels credible from the first screen.",
     projectsEyebrow: "Live Projects", projectsTitle: "Private demos ready to show prospects.", xoltecEyebrow: "Protected CRM Demo", xoltecBody: "A custom CRM and quoting workflow for solar projects, with client records, product catalog, PDF quotes, internal commissions, commercial conditions, and mobile access.", openDemo: "Open private demo",
-    paymentsEyebrow: "Payments", paymentsTitle: "Secure card payments for projects and professional services.", clipEyebrow: "Clip Checkout", clipTitle: "Pay retainers, project deposits, and milestones with confidence.", clipBody: "Use this section when a project is approved and you need a clean, secure way to pay by card through Clip.", clipStep1: "Confirm amount and concept", clipStep2: "Generate secure Clip checkout link", clipStep3: "Client pays by card and returns to the site", requestPaymentLink: "Request payment link", paymentAmount: "Amount", paymentConcept: "Concept", paymentName: "Name", paymentEmail: "Email", paymentFeedback: "Add the agreed amount and concept. I will send you to a secure Clip checkout to complete the card payment.", paymentFallback: "I prepared the payment request in WhatsApp while the Clip API endpoint is activated.", paymentCreating: "Creating secure Clip payment link...", paymentError: "The payment link could not be created. Please contact me by WhatsApp.",
+    paymentsEyebrow: "Payments", paymentsTitle: "Secure card payments for projects and professional services.", clipEyebrow: "Clip Checkout", clipTitle: "Pay retainers, project deposits, and milestones with confidence.", clipBody: "Use this section when a project is approved and you need a clean, secure way to pay by card through Clip.", clipStep1: "Confirm amount and concept", clipStep2: "Generate secure Clip checkout link", clipStep3: "Client pays by card and returns to the site", requestPaymentLink: "Request payment link", paymentAmount: "Amount", paymentConcept: "Concept", paymentName: "Name", paymentEmail: "Email", paymentFeedback: "Add the agreed amount and concept. I will send you to a secure Clip checkout to complete the card payment.", paymentFallback: "I prepared the payment request in WhatsApp while the Clip API endpoint is activated.", paymentCreating: "Creating secure Clip payment link...", paymentError: "The payment link could not be created. Please contact me by WhatsApp.", paymentSuccessEyebrow: "Payment confirmed", paymentSuccessTitle: "Your payment was approved.", paymentSuccessBody: "You can download a payment receipt for your records. This receipt does not replace a fiscal invoice.", downloadReceipt: "Download receipt PDF", receiptQuestions: "Questions about this payment",
     skillsEyebrow: "Core Skills", skillsTitle: "Built for execution-heavy environments.", skillBusiness: "Business Operations", skillProcess: "Process Optimization", skillExecutive: "Executive Support", skillSystems: "IT Systems", skillCrm: "Custom CRM", skillLanding: "Landing Pages", skillTransformation: "Digital Transformation", skillProject: "Project Management", skillProblem: "Problem Solving",
     contactEyebrow: "Contact", contactTitle: "Let's connect.", contactBody: "Available for business operations, IT systems, custom CRM, landing page, executive support, and process improvement conversations.", formTitle: "Contact me", formName: "Name", formEmail: "Email", formMessage: "Message", formSubmit: "Send message", linkedinProfile: "LinkedIn Profile", businessSocials: "Business Socials", footerText: "© 2026 Ricardo Renteria. All rights reserved."
   },
@@ -41,7 +41,7 @@ const translations = {
     projectCrmEyebrow: "Producto", projectCrmTitle: "CRM a la medida", projectCrmBody: "Construyo CRM alrededor del flujo real del cliente, como un traje a la medida: pipelines claros, dashboards útiles, contactos organizados, cotizaciones y herramientas que se adaptan a cómo el negocio vende y da seguimiento.",
     projectLandingEyebrow: "Producto", projectLandingTitle: "Landing pages", projectLandingBody: "Creo landing pages enfocadas para profesionales y negocios que necesitan presencia digital pulida, una oferta clara, vías de contacto fuertes y un diseño que genere confianza desde el primer vistazo.",
     projectsEyebrow: "Proyectos en línea", projectsTitle: "Demos privadas listas para mostrar a prospectos.", xoltecEyebrow: "Demo CRM protegida", xoltecBody: "CRM y flujo de cotización a la medida para proyectos solares, con clientes, catálogo de productos, PDF de cotizaciones, comisiones internas, condiciones comerciales y acceso móvil.", openDemo: "Abrir demo privada",
-    paymentsEyebrow: "Pagos", paymentsTitle: "Pagos seguros con tarjeta para proyectos y servicios profesionales.", clipEyebrow: "Checkout Clip", clipTitle: "Paga anticipos, apartados y avances de proyecto con confianza.", clipBody: "Usa esta sección cuando tu proyecto esté aprobado y necesites una forma clara y segura de pagar con tarjeta mediante Clip.", clipStep1: "Confirmar monto y concepto", clipStep2: "Generar link seguro de Checkout Clip", clipStep3: "El cliente paga con tarjeta y regresa al sitio", requestPaymentLink: "Solicitar link de pago", paymentAmount: "Monto", paymentConcept: "Concepto", paymentName: "Nombre", paymentEmail: "Correo", paymentFeedback: "Agrega el monto acordado y el concepto. Te llevaré a un checkout seguro de Clip para completar el pago con tarjeta.", paymentFallback: "Preparé la solicitud de pago por WhatsApp mientras se activa el endpoint de Clip.", paymentCreating: "Creando link seguro de pago con Clip...", paymentError: "No se pudo crear el link de pago. Contáctame por WhatsApp.",
+    paymentsEyebrow: "Pagos", paymentsTitle: "Pagos seguros con tarjeta para proyectos y servicios profesionales.", clipEyebrow: "Checkout Clip", clipTitle: "Paga anticipos, apartados y avances de proyecto con confianza.", clipBody: "Usa esta sección cuando tu proyecto esté aprobado y necesites una forma clara y segura de pagar con tarjeta mediante Clip.", clipStep1: "Confirmar monto y concepto", clipStep2: "Generar link seguro de Checkout Clip", clipStep3: "El cliente paga con tarjeta y regresa al sitio", requestPaymentLink: "Solicitar link de pago", paymentAmount: "Monto", paymentConcept: "Concepto", paymentName: "Nombre", paymentEmail: "Correo", paymentFeedback: "Agrega el monto acordado y el concepto. Te llevaré a un checkout seguro de Clip para completar el pago con tarjeta.", paymentFallback: "Preparé la solicitud de pago por WhatsApp mientras se activa el endpoint de Clip.", paymentCreating: "Creando link seguro de pago con Clip...", paymentError: "No se pudo crear el link de pago. Contáctame por WhatsApp.", paymentSuccessEyebrow: "Pago confirmado", paymentSuccessTitle: "Tu pago fue aprobado.", paymentSuccessBody: "Puedes descargar un comprobante de pago para tu registro. Este comprobante no sustituye una factura fiscal.", downloadReceipt: "Descargar comprobante PDF", receiptQuestions: "Dudas sobre este pago",
     skillsEyebrow: "Habilidades clave", skillsTitle: "Preparado para entornos donde la ejecución pesa.", skillBusiness: "Operaciones de negocio", skillProcess: "Optimización de procesos", skillExecutive: "Soporte ejecutivo", skillSystems: "Sistemas IT", skillCrm: "CRM a la medida", skillLanding: "Landing pages", skillTransformation: "Transformación digital", skillProject: "Gestión de proyectos", skillProblem: "Solución de problemas",
     contactEyebrow: "Contacto", contactTitle: "Conectemos.", contactBody: "Disponible para conversaciones sobre operaciones de negocio, sistemas IT, CRM a la medida, landing pages, soporte ejecutivo y mejora de procesos.", formTitle: "Contáctame", formName: "Nombre", formEmail: "Correo", formMessage: "Mensaje", formSubmit: "Enviar mensaje", linkedinProfile: "Perfil de LinkedIn", businessSocials: "Redes empresariales", footerText: "© 2026 Ricardo Rentería. Todos los derechos reservados."
   }
@@ -54,6 +54,8 @@ const paymentForm = document.querySelector("[data-payment-form]");
 const paymentFeedback = document.querySelector("[data-payment-feedback]");
 const paymentButtonImage = document.querySelector("[data-payment-button-image]");
 const paymentButton = document.querySelector(".clip-pay-button");
+const paymentResult = document.querySelector("[data-payment-result]");
+const downloadReceiptButton = document.querySelector("[data-download-receipt]");
 const clipCheckoutEndpoint = window.RR_CLIP_CHECKOUT_ENDPOINT || "https://itpdqkumkgaossbfhqhp.supabase.co/functions/v1/clip-checkout";
 let currentLanguage = localStorage.getItem("preferredLanguage") || "en";
 
@@ -131,11 +133,155 @@ async function handlePaymentRequest(event) {
     });
     const result = await response.json();
     if (!response.ok || !result.paymentUrl) throw new Error(result.error || "Payment link error");
+    sessionStorage.setItem("rrz-last-payment", JSON.stringify({ ...data, paymentRequestId: result.paymentRequestId, paymentUrl: result.paymentUrl, createdAt: new Date().toISOString() }));
     window.location.href = result.paymentUrl;
   } catch (error) {
     setPaymentFeedback("paymentError");
   }
 }
+
+function getPaymentResult() {
+  return new URLSearchParams(window.location.search).get("payment");
+}
+
+function getStoredPayment() {
+  try {
+    return JSON.parse(sessionStorage.getItem("rrz-last-payment") || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function cleanPdfText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x20-\x7E]/g, "")
+    .trim();
+}
+
+function escapePdfText(value) {
+  return cleanPdfText(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+}
+
+function formatMoney(amount) {
+  const value = Number(amount || 0);
+  return value.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+}
+
+function formatDateTime(value) {
+  const date = value ? new Date(value) : new Date();
+  return date.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+}
+
+async function loadLogoData() {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.src = "logo3.png";
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  canvas.getContext("2d").drawImage(image, 0, 0);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+  return {
+    binary: atob(dataUrl.split(",")[1]),
+    width: image.naturalWidth,
+    height: image.naturalHeight,
+  };
+}
+
+function buildReceiptPdf(payment, logo) {
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const lines = [
+    { text: "COMPROBANTE DE PAGO", x: 56, y: 710, size: 22 },
+    { text: "Ricardo Renteria | Business Operations, CRM & IT", x: 56, y: 682, size: 11 },
+    { text: "renteriamba@gmail.com | WhatsApp +52 729 474 5365 | ricardorenteria.pro", x: 56, y: 664, size: 9 },
+    { text: "", x: 56, y: 638, size: 10 },
+    { text: "Estado: Pago aprobado mediante Checkout Clip", x: 56, y: 620, size: 12 },
+    { text: "Fecha de emision: " + formatDateTime(new Date()), x: 56, y: 596, size: 10 },
+    { text: "Fecha de solicitud: " + formatDateTime(payment.createdAt), x: 56, y: 578, size: 10 },
+    { text: "Referencia interna: " + (new URLSearchParams(window.location.search).get("reference") || "N/D"), x: 56, y: 560, size: 10 },
+    { text: "Payment Request ID: " + (payment.paymentRequestId || "N/D"), x: 56, y: 542, size: 10 },
+    { text: "", x: 56, y: 516, size: 10 },
+    { text: "Cliente: " + (payment.name || "N/D"), x: 56, y: 496, size: 11 },
+    { text: "Correo: " + (payment.email || "N/D"), x: 56, y: 476, size: 10 },
+    { text: "Concepto: " + (payment.concept || "Servicio profesional"), x: 56, y: 456, size: 10 },
+    { text: "Monto pagado: " + formatMoney(payment.amount), x: 56, y: 430, size: 16 },
+    { text: "", x: 56, y: 400, size: 10 },
+    { text: "Este comprobante confirma la recepcion del pago realizado en Clip.", x: 56, y: 378, size: 9 },
+    { text: "No sustituye una factura fiscal. Si necesitas factura, contacta a Ricardo Renteria.", x: 56, y: 362, size: 9 },
+  ];
+
+  const objects = [];
+  objects.push("<< /Type /Catalog /Pages 2 0 R >>");
+  objects.push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidth + " " + pageHeight + "] /Resources << /Font << /F1 4 0 R >>" + (logo ? " /XObject << /Im1 5 0 R >>" : "") + " >> /Contents " + (logo ? "6" : "5") + " 0 R >>");
+  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  let content = "0.96 0.97 0.99 rg 0 0 " + pageWidth + " " + pageHeight + " re f\n";
+  content += "0.05 0.07 0.10 rg 0 " + (pageHeight - 128) + " " + pageWidth + " 128 re f\n";
+  content += "0.93 0.35 0.12 rg 56 642 120 3 re f\n";
+  if (logo) {
+    const logoWidth = 150;
+    const logoHeight = Math.min(72, logoWidth * (logo.height / logo.width));
+    content += "q " + logoWidth + " 0 0 " + logoHeight + " 390 735 cm /Im1 Do Q\n";
+  }
+  lines.forEach((line) => {
+    if (!line.text) return;
+    const isHeader = line.y > 650;
+    content += "BT /F1 " + line.size + " Tf " + (isHeader ? "1 1 1" : "0.10 0.13 0.18") + " rg " + line.x + " " + line.y + " Td (" + escapePdfText(line.text) + ") Tj ET\n";
+  });
+  content += "0.82 0.85 0.90 RG 56 322 483 0.8 w 0 0 m S\n";
+
+  if (logo) {
+    objects.push("<< /Type /XObject /Subtype /Image /Width " + logo.width + " /Height " + logo.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + logo.binary.length + " >>\nstream\n" + logo.binary + "\nendstream");
+  }
+  objects.push("<< /Length " + content.length + " >>\nstream\n" + content + "endstream");
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(pdf.length);
+    pdf += (index + 1) + " 0 obj\n" + object + "\nendobj\n";
+  });
+  const xref = pdf.length;
+  pdf += "xref\n0 " + (objects.length + 1) + "\n0000000000 65535 f \n";
+  for (let i = 1; i < offsets.length; i += 1) pdf += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+  pdf += "trailer << /Size " + (objects.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+  return new Blob([Uint8Array.from(pdf, (char) => char.charCodeAt(0))], { type: "application/pdf" });
+}
+
+async function downloadReceiptPdf() {
+  const payment = getStoredPayment();
+  let logo = null;
+  try {
+    logo = await loadLogoData();
+  } catch (error) {
+    logo = null;
+  }
+  const blob = buildReceiptPdf(payment, logo);
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "comprobante-ricardo-renteria-" + (payment.paymentRequestId || Date.now()) + ".pdf";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(link.href);
+}
+
+function showPaymentResultIfNeeded() {
+  const result = getPaymentResult();
+  if (result !== "success" || !paymentResult) return;
+  paymentResult.classList.remove("hidden");
+  paymentResult.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+downloadReceiptButton?.addEventListener("click", downloadReceiptPdf);
+showPaymentResultIfNeeded();
 
 if (paymentForm) paymentForm.addEventListener("submit", handlePaymentRequest);
 applyLanguage(localStorage.getItem("preferredLanguage") || "en");
