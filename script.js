@@ -208,7 +208,26 @@ function splitPdfText(text, maxLength = 76) {
   return lines.length ? lines : ["N/D"];
 }
 
-function buildReceiptPdf(payment) {
+async function loadReceiptLogo() {
+  const image = new Image();
+  image.src = "logo3.png";
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  canvas.getContext("2d").drawImage(image, 0, 0);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+  return {
+    binary: atob(dataUrl.split(",")[1]),
+    width: image.naturalWidth,
+    height: image.naturalHeight,
+  };
+}
+
+function buildReceiptPdf(payment, logo) {
   const pageWidth = 595;
   const pageHeight = 842;
   const reference = payment.reference || getPaymentReference() || "N/D";
@@ -227,43 +246,58 @@ function buildReceiptPdf(payment) {
   const objects = [];
   objects.push("<< /Type /Catalog /Pages 2 0 R >>");
   objects.push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidth + " " + pageHeight + "] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>");
+  objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidth + " " + pageHeight + "] /Resources << /Font << /F1 4 0 R /F2 5 0 R >>" + (logo ? " /XObject << /Im1 6 0 R >>" : "") + " >> /Contents " + (logo ? "7" : "6") + " 0 R >>");
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
 
-  let content = "0.97 0.98 1 rg 0 0 " + pageWidth + " " + pageHeight + " re f\n";
-  content += "0.05 0.07 0.10 rg 0 718 " + pageWidth + " 124 re f\n";
-  content += "0.95 0.26 0.08 rg 0 718 12 124 re f\n";
-  content += "0.95 0.26 0.08 rg 56 690 132 3 re f\n";
-  content += "BT /F2 28 Tf 1 1 1 rg 56 770 Td (RICARDO RENTERIA) Tj ET\n";
-  content += "BT /F1 10 Tf 0.80 0.86 0.93 rg 58 750 Td (Business Operations | CRM | IT Systems | Landing Pages) Tj ET\n";
-  content += "BT /F1 9 Tf 0.80 0.86 0.93 rg 58 732 Td (renteriamba@gmail.com | WhatsApp +52 729 474 5365 | ricardorenteria.pro) Tj ET\n";
+  let content = "0.985 0.988 0.992 rg 0 0 " + pageWidth + " " + pageHeight + " re f\n";
+  content += "0.055 0.070 0.090 rg 0 0 " + pageWidth + " " + pageHeight + " re f\n";
+  content += "0.985 0.988 0.992 rg 34 34 527 774 re f\n";
+  content += "0.070 0.090 0.120 rg 34 696 527 112 re f\n";
+  content += "0.38 0.56 0.86 rg 34 696 6 112 re f\n";
 
-  content += "0.92 0.96 0.95 rg 56 632 483 56 re f\n";
-  content += "0.31 0.80 0.77 RG 56 632 483 56 re S\n";
-  content += "BT /F2 18 Tf 0.05 0.10 0.13 rg 78 665 Td (COMPROBANTE DE PAGO APROBADO) Tj ET\n";
-  content += "BT /F1 9 Tf 0.25 0.32 0.40 rg 78 648 Td (Emitido automaticamente despues de la aprobacion del pago en Clip.) Tj ET\n";
+  if (logo) {
+    content += "1 1 1 rg 396 722 118 62 re f\n";
+    content += "0.86 0.89 0.94 RG 396 722 118 62 re S\n";
+    const logoWidth = 92;
+    const logoHeight = Math.min(54, logoWidth * (logo.height / logo.width));
+    content += "q " + logoWidth + " 0 0 " + logoHeight + " 409 " + (727 + (54 - logoHeight) / 2) + " cm /Im1 Do Q\n";
+  }
 
-  content += "0.95 0.26 0.08 rg 56 575 483 34 re f\n";
-  content += "BT /F2 18 Tf 1 1 1 rg 78 588 Td (Monto pagado: " + escapePdfText(formatMoney(payment.amount)) + ") Tj ET\n";
+  content += "BT /F2 22 Tf 1 1 1 rg 62 764 Td (RECIBO DE PAGO) Tj ET\n";
+  content += "BT /F1 10 Tf 0.78 0.84 0.91 rg 63 744 Td (Ricardo Renteria | Business Operations, CRM & IT Systems) Tj ET\n";
+  content += "BT /F1 8.5 Tf 0.78 0.84 0.91 rg 63 728 Td (renteriamba@gmail.com | +52 729 474 5365 | ricardorenteria.pro) Tj ET\n";
 
-  let y = 540;
+  content += "0.90 0.97 0.95 rg 62 626 471 54 re f\n";
+  content += "0.25 0.63 0.56 RG 62 626 471 54 re S\n";
+  content += "BT /F2 15 Tf 0.07 0.18 0.16 rg 84 658 Td (Pago aprobado) Tj ET\n";
+  content += "BT /F1 9 Tf 0.25 0.38 0.36 rg 84 642 Td (Operacion procesada mediante Checkout Clip.) Tj ET\n";
+
+  content += "0.075 0.105 0.145 rg 62 562 471 42 re f\n";
+  content += "BT /F2 18 Tf 1 1 1 rg 84 577 Td (Monto: " + escapePdfText(formatMoney(payment.amount)) + ") Tj ET\n";
+
+  let y = 522;
   detailRows.forEach(([label, value]) => {
-    const valueLines = splitPdfText(value, 64);
-    content += "BT /F2 9 Tf 0.34 0.40 0.49 rg 78 " + y + " Td (" + escapePdfText(label.toUpperCase()) + ") Tj ET\n";
-    y -= 15;
+    const valueLines = splitPdfText(value, 62);
+    content += "BT /F2 8.5 Tf 0.42 0.48 0.58 rg 84 " + y + " Td (" + escapePdfText(label.toUpperCase()) + ") Tj ET\n";
+    y -= 14;
     valueLines.forEach((line) => {
-      content += "BT /F1 11 Tf 0.09 0.12 0.16 rg 78 " + y + " Td (" + escapePdfText(line) + ") Tj ET\n";
-      y -= 15;
+      content += "BT /F1 10.5 Tf 0.08 0.10 0.14 rg 84 " + y + " Td (" + escapePdfText(line) + ") Tj ET\n";
+      y -= 14;
     });
-    y -= 8;
+    y -= 7;
   });
 
-  content += "0.82 0.85 0.90 RG 56 142 483 0.8 w 0 0 m S\n";
-  content += "BT /F1 8 Tf 0.38 0.44 0.52 rg 56 120 Td (Este comprobante confirma la recepcion del pago realizado mediante Checkout Clip.) Tj ET\n";
-  content += "BT /F1 8 Tf 0.38 0.44 0.52 rg 56 106 Td (No sustituye una factura fiscal. Si necesitas factura, contacta a Ricardo Renteria.) Tj ET\n";
+  content += "0.86 0.89 0.94 RG 62 154 471 0.8 w 0 0 m S\n";
+  content += "BT /F1 8.5 Tf 0.35 0.40 0.48 rg 62 132 Td (Documento emitido como acuse de pago para control administrativo del cliente.) Tj ET\n";
+  content += "BT /F1 8.5 Tf 0.35 0.40 0.48 rg 62 117 Td (Para factura fiscal o aclaraciones, solicita seguimiento con Ricardo Renteria.) Tj ET\n";
+  content += "BT /F1 7.5 Tf 0.52 0.57 0.65 rg 62 92 Td (Generado automaticamente por ricardorenteria.pro) Tj ET\n";
 
+  if (logo) {
+    objects.push("<< /Type /XObject /Subtype /Image /Width " + logo.width + " /Height " + logo.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + logo.binary.length + " >>\nstream\n" + logo.binary + "\nendstream");
+  }
   objects.push("<< /Length " + content.length + " >>\nstream\n" + content + "endstream");
+
   let pdf = "%PDF-1.4\n";
   const offsets = [0];
   objects.forEach((object, index) => {
@@ -277,9 +311,15 @@ function buildReceiptPdf(payment) {
   return new Blob([Uint8Array.from(pdf, (char) => char.charCodeAt(0))], { type: "application/pdf" });
 }
 
-function downloadReceiptPdf() {
+async function downloadReceiptPdf() {
   const payment = activeReceiptPayment || getStoredPayment();
-  const blob = buildReceiptPdf(payment);
+  let logo = null;
+  try {
+    logo = await loadReceiptLogo();
+  } catch (error) {
+    logo = null;
+  }
+  const blob = buildReceiptPdf(payment, logo);
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "comprobante-ricardo-renteria-" + (payment.paymentRequestId || payment.reference || Date.now()) + ".pdf";
