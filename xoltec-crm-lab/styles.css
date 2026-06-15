@@ -273,9 +273,10 @@ button {
 
 .maintenance-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  grid-template-columns: minmax(0, 920px);
   gap: 18px;
   align-items: start;
+  justify-content: center;
 }
 
 .backup-copy {
@@ -1050,6 +1051,16 @@ menu {
   border-radius: 8px;
   background: #ffffff;
   padding: 12px 14px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.quote-list-item:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  box-shadow: 0 12px 28px rgba(29, 36, 48, 0.08);
+  transform: translateY(-1px);
 }
 
 .quote-list-main {
@@ -1072,9 +1083,13 @@ menu {
 }
 
 .quote-list-total {
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 999px;
+  background: #edf7f3;
   color: var(--accent-strong);
   font-size: 1rem;
   font-weight: 950;
+  padding: 7px 12px;
   white-space: nowrap;
 }
 
@@ -1089,6 +1104,16 @@ menu {
   min-height: 38px;
   padding: 0 12px;
   white-space: nowrap;
+}
+
+.quote-list-actions .primary-button {
+  border-color: #b45309;
+  background: var(--brand-gold);
+  color: #17202b;
+}
+
+.quote-list-actions .primary-button:hover {
+  background: #d9972f;
 }
 
 .quote-client-card {
