@@ -2411,6 +2411,30 @@ function generateQuotePdf(quoteId) {
           .terms-card .notes { margin-top: 0; padding: 12px; }
           .notes p { margin: 0; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.74); border: 1px solid #e5e7eb; }
           .maintenance-terms .notes p { background: #f8fafc; border-left: 3px solid #eba83a; }
+          .maintenance-commercial .section-title { margin-bottom: 10px; font-size: 17px; }
+          .maintenance-commercial .prepared { margin-top: 10px; padding: 10px 12px; font-size: 10.5px; gap: 3px; }
+          .maintenance-commercial .terms-card { margin-top: 10px; border-radius: 11px; }
+          .maintenance-commercial .terms-summary { padding: 9px 12px; }
+          .maintenance-commercial .terms-summary strong { font-size: 15px; }
+          .maintenance-commercial .payment-grid div { padding: 7px 10px; }
+          .maintenance-commercial .payment-grid strong { font-size: 11px; }
+          .maintenance-commercial .terms-card .notes { padding: 9px; }
+          .maintenance-commercial .notes { gap: 5px; font-size: 9.7px; line-height: 1.22; }
+          .maintenance-commercial .notes p { padding: 6px 8px; }
+          .maintenance-commercial .signature { gap: 26px; margin-top: 13px; font-size: 10.5px; }
+          .maintenance-commercial .signature-box { min-height: 74px; padding: 8px 10px 10px; }
+          .maintenance-commercial .signature-value { margin-bottom: 5px; }
+          .maintenance-commercial .signature-image { max-height: 42px; margin-bottom: 3px; }
+          .maintenance-commercial .signature-line { padding-top: 5px; }
+          .maintenance-commercial .validity { margin-top: 12px; padding: 8px 10px; font-size: 10px; }
+          .maintenance-commercial .bank-card { margin-top: 10px; border-radius: 11px; }
+          .maintenance-commercial .bank-card-header { padding: 8px 10px; }
+          .maintenance-commercial .bank-card-header strong { font-size: 10px; }
+          .maintenance-commercial .bank-card-header span { font-size: 9px; }
+          .maintenance-commercial .bank-item { gap: 2px; padding: 6px 9px; }
+          .maintenance-commercial .bank-item span { font-size: 7.8px; }
+          .maintenance-commercial .bank-item strong { font-size: 9.4px; }
+          .maintenance-commercial .invoice-note { padding: 7px 9px; font-size: 8.8px; line-height: 1.25; }
           .prepared { display: grid; gap: 5px; margin-top: 18px; font-size: 11.5px; line-height: 1.4; background: rgba(32,58,73,0.92); color: #ffffff; border-radius: 12px; padding: 15px 16px; box-shadow: none; }
           .prepared strong { color: #eba83a; }
           .signature { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 24px; font-size: 12px; }
@@ -2558,7 +2582,7 @@ function generateQuotePdf(quoteId) {
           </div>
           ${footer}
         </section>
-        <section class="page page-break">
+        <section class="page page-break ${quoteType === "maintenance" ? "maintenance-commercial" : ""}">
           <div class="watermark soft"></div>
           <div class="content">
             <h1 class="section-title">Condiciones comerciales</h1>
