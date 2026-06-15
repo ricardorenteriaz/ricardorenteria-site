@@ -715,7 +715,7 @@ function setView(view) {
   views[view].classList.add("active");
   document.querySelector("#view-title").textContent = titles[view];
   document.body.dataset.view = view;
-  const hideSearch = view === "users" || view === "maintenance" || view === "quoteHistory";
+  const hideSearch = view === "users" || view === "maintenance";
   document.querySelector(".search").classList.toggle("hidden", hideSearch);
   if (hideSearch) document.querySelector("#search-input").value = "";
   if (view === "users" && isSupabaseSession()) refreshSupabaseUsers();
