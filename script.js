@@ -266,7 +266,7 @@ function buildReceiptPdf(payment, logo) {
 
   content += "BT /F2 22 Tf 1 1 1 rg 62 764 Td (RECIBO DE PAGO) Tj ET\n";
   content += "BT /F1 10 Tf 0.78 0.84 0.91 rg 63 744 Td (Ricardo Renteria | Business Operations, CRM & IT Systems) Tj ET\n";
-  content += "BT /F1 8.5 Tf 0.78 0.84 0.91 rg 63 728 Td (renteriamba@gmail.com | +52 729 474 5365 | ricardorenteria.pro) Tj ET\n";
+  content += "BT /F1 8.5 Tf 0.78 0.84 0.91 rg 63 728 Td (ricardo@ricardorenteria.pro | +52 729 474 5365 | ricardorenteria.pro) Tj ET\n";
 
   content += "0.90 0.97 0.95 rg 62 626 471 54 re f\n";
   content += "0.25 0.63 0.56 RG 62 626 471 54 re S\n";
