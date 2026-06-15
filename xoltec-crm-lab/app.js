@@ -2275,8 +2275,8 @@ function quoteCommercialTerms(type, total, advancePercent, balancePercent) {
       <p><strong>NOTA DOS:</strong> GARANTÍA EN PANELES Y EQUIPOS DE 20 AÑOS</p>
       <p><strong>NOTA TRES:</strong> EN LA PRESENTE COTIZACIÓN NO SE INCLUYE EL COSTO DE OBRA CIVIL, EN CASO DE QUE EL PROYECTO LA REQUIERA,</p>
       <p><strong>NOTA CUATRO:</strong> EL TRAMITE DE INTERCONEXION ESTA SUJETO A LOS TIEMPOS DE LA COMISION FEDERAL DE ELECTRICIDAD Y DEMAS DEPENDENCIAS INVOLUCRADAS</p>
-      <p><strong>NOTA:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
-      <p><strong>NOTA:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
+      <p><strong>NOTA CINCO:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
+      <p><strong>NOTA SEIS:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
     </div>
   `;
 }
@@ -2293,6 +2293,8 @@ function generateQuotePdf(quoteId) {
   const discountAmount = (quote.totals && quote.totals.discountAmount) || 0;
   const iva = (quote.totals && quote.totals.iva) || 0;
   const total = (quote.totals && quote.totals.total) || 0;
+  const discountRow =
+    discountAmount > 0 ? `<div><span>DESCUENTO</span><span>${money.format(discountAmount)}</span></div>` : "";
   const advancePercent = quote.advancePercent || 70;
   const balancePercent = Math.max(100 - advancePercent, 0);
   const quoteType = quote.quoteType || "solar";
@@ -2535,7 +2537,7 @@ function generateQuotePdf(quoteId) {
             </table>
             <div class="totals">
               <div><span>SUBTOTAL</span><span>${money.format(subtotal)}</span></div>
-              <div><span>DESCUENTO</span><span>${money.format(discountAmount)}</span></div>
+              ${discountRow}
               <div><span>IVA</span><span>${money.format(iva)}</span></div>
               <div><span>TOTAL</span><span>${money.format(total)}</span></div>
             </div>
