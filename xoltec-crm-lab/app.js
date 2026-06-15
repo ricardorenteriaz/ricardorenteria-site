@@ -248,6 +248,7 @@ document.querySelector("#quote-latest-list").addEventListener("click", handleQuo
 document.querySelector("#quote-cancel-edit").addEventListener("click", resetQuoteForm);
 document.querySelector("#unlock-prices").addEventListener("click", unlockQuotePrices);
 document.querySelector("#same-install-address").addEventListener("change", syncInstallAddress);
+document.querySelector("#quote-type").addEventListener("change", renderQuoteProducts);
 document.querySelector("#quote-discount").addEventListener("input", renderQuoteProductTotals);
 document.querySelector("#quote-commission-percent").addEventListener("input", renderQuoteProductTotals);
 document.querySelector("#product-form").addEventListener("submit", addProduct);
@@ -1110,6 +1111,7 @@ function handleQuoteActionClick(event) {
 }
 
 function renderQuoteProducts() {
+  const showWorkArea = document.querySelector("#quote-type").value === "maintenance";
   document.querySelector("#quote-products").innerHTML = state.products
     .map(
       (product) => `
@@ -1118,7 +1120,7 @@ function renderQuoteProducts() {
             <input class="quote-product-check" data-product-id="${product.id}" type="checkbox" />
             <span>
               ${escapeHtml(product.name)}
-              <small>Área a trabajar: ${escapeHtml(product.workArea || "Sin especificar")}</small>
+              ${showWorkArea ? `<small>Área a trabajar: ${escapeHtml(product.workArea || "Sin especificar")}</small>` : ""}
             </span>
           </label>
           <label class="quote-price-input">
@@ -1149,6 +1151,7 @@ function renderQuoteProducts() {
 function resetQuoteForm() {
   editingQuoteId = null;
   document.querySelector("#quote-client-form").reset();
+  document.querySelector("#quote-type").disabled = false;
   document.querySelector("#same-install-address").checked = false;
   renderQuoteProducts();
   updateQuoteFormMode();
@@ -1165,6 +1168,10 @@ function updateQuoteFormMode() {
   document.querySelector("#quote-save-button").textContent = isEditing
     ? "Guardar cambios"
     : "Guardar cotización";
+  document.querySelector("#quote-type").disabled = isEditing;
+  document.querySelector("#quote-type").title = isEditing
+    ? "El tipo de cotización queda fijo después de guardar."
+    : "";
   document.querySelector("#quote-cancel-edit").classList.toggle("hidden", !isEditing);
 }
 
@@ -1175,6 +1182,7 @@ function editQuote(quoteId) {
   editingQuoteId = quote.id;
   setView("quotes");
   document.querySelector("#quote-type").value = quote.quoteType || "solar";
+  renderQuoteProducts();
   document.querySelector("#quote-company").value = quote.company || "";
   document.querySelector("#quote-tax-id").value = quote.taxId || "";
   document.querySelector("#quote-contact").value = quote.contact || "";
@@ -2238,7 +2246,7 @@ function generateQuotePdf(quoteId) {
       (product) => `
         <tr>
           <td>${escapeHtml(product.name)}</td>
-          <td>${escapeHtml(product.workArea || "Sin especificar")}</td>
+          ${quoteType === "maintenance" ? `<td>${escapeHtml(product.workArea || "Sin especificar")}</td>` : ""}
           <td>${escapeHtml(formatProductQuantity(product))}</td>
           <td>${money.format(product.price)}</td>
           <td>${money.format(product.lineTotal)}</td>
@@ -2286,6 +2294,8 @@ function generateQuotePdf(quoteId) {
           td { border: 1px solid rgba(31,41,55,0.58); background: transparent; padding: 8px; font-size: 11.5px; }
           td:nth-child(3), td:nth-child(4) { text-align: center; white-space: nowrap; }
           td:nth-child(5) { text-align: right; white-space: nowrap; }
+          body.solar td:nth-child(2), body.solar td:nth-child(3) { text-align: center; white-space: nowrap; }
+          body.solar td:nth-child(4) { text-align: right; white-space: nowrap; }
           .totals { width: 38%; margin-left: auto; margin-top: 16px; background: transparent; border: 0; border-radius: 0; padding: 6px 13px; box-shadow: none; }
           .totals div { display: flex; justify-content: space-between; font-weight: 700; padding: 4px 0; font-size: 12px; }
           .totals div:last-child { border-top: 1px solid #d7dde5; margin-top: 4px; padding-top: 8px; color: #0f766e; font-size: 14px; }
@@ -2425,7 +2435,7 @@ function generateQuotePdf(quoteId) {
           @media print { button { display: none; } .page { width: 8.5in; } }
         </style>
       </head>
-      <body>
+      <body class="${quoteType}">
         <section class="page">
           <div class="watermark"></div>
           <div class="content">
@@ -2450,7 +2460,13 @@ function generateQuotePdf(quoteId) {
             </div>
             <table>
               <thead>
-                <tr><th>DESCRIPCIÓN</th><th>ÁREA A TRABAJAR</th><th>CANTIDAD</th><th>PRECIO UNITARIO</th><th>TOTALES</th></tr>
+                <tr>
+                  <th>DESCRIPCIÓN</th>
+                  ${quoteType === "maintenance" ? "<th>ÁREA A TRABAJAR</th>" : ""}
+                  <th>CANTIDAD</th>
+                  <th>PRECIO UNITARIO</th>
+                  <th>TOTALES</th>
+                </tr>
               </thead>
               <tbody>${rows}</tbody>
             </table>
