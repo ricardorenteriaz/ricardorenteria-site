@@ -1612,6 +1612,13 @@ async function saveSupabaseUser(user, isEditing) {
     const { data, error } = await supabaseSignupClient.auth.signUp({
       email: user.user,
       password: user.password,
+      options: {
+        data: {
+          full_name: user.name,
+          position: user.position,
+          role: user.role || "seller",
+        },
+      },
     });
 
     if (error || !data.user) {
@@ -1641,7 +1648,7 @@ async function saveSupabaseUser(user, isEditing) {
         .single()
     : supabaseClient
         .from("profiles")
-        .insert(payload)
+        .upsert(payload, { onConflict: "id" })
         .select("id, username, full_name, position, role, signature_url")
         .single();
   const { data, error } = await query;
