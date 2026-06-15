@@ -2338,11 +2338,14 @@ function generateQuotePdf(quoteId) {
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
         <title>Cotización XOLTEC</title>
         <style>
-          @page { size: letter portrait; margin: 0; }
+          @page { size: letter portrait; margin: 0 !important; }
           * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
-          body { margin: 0; color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
+          html, body { margin: 0 !important; padding: 0 !important; }
+          body { color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
           .pdf-return-bar { display: none; }
-          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.78in; position: relative; overflow: hidden; }
+          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.98in; position: relative; overflow: hidden; }
+          .quote-page { overflow: visible; display: flex; flex-direction: column; }
+          .quote-page .content { flex: 1 0 auto; display: flex; flex-direction: column; }
           .watermark { position: absolute; left: 1.35in; right: 1.35in; top: 4.15in; height: 3.4in; background: url("${logoUrl}") center / contain no-repeat; opacity: 0.16; z-index: 0; pointer-events: none; }
           .watermark.soft { top: 3.05in; opacity: 0.12; }
           .content { position: relative; z-index: 1; }
@@ -2356,17 +2359,21 @@ function generateQuotePdf(quoteId) {
           .present::before, .present::after { content: ""; width: 34px; height: 1px; background: #c7ccd4; }
           .client-card { background: rgba(255,255,255,0.72); border: 1px solid #d7dde5; border-radius: 10px; margin-top: 16px; margin-bottom: 30px; padding: 15px 18px; line-height: 1.58; font-size: 12px; box-shadow: none; }
           .intro { margin: 18px 0 0; font-size: 13px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 0; background: transparent; border: 1px solid #6b7280; border-radius: 0; overflow: visible; }
+          table { width: 100%; border-collapse: collapse; margin-top: 0; background: transparent; border: 1px solid #6b7280; border-radius: 0; overflow: visible; page-break-inside: auto; break-inside: auto; }
+          thead { display: table-header-group; }
+          tbody { display: table-row-group; }
+          tr, th, td { page-break-inside: avoid; break-inside: avoid; }
           th { background-color: #bfbfbf !important; color: #111827; font-size: 11px; letter-spacing: 0.3px; padding: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           td { border: 1px solid rgba(31,41,55,0.58); background: transparent; padding: 8px; font-size: 11.5px; }
           td:nth-child(3), td:nth-child(4) { text-align: center; white-space: nowrap; }
           td:nth-child(5) { text-align: right; white-space: nowrap; }
           body.solar td:nth-child(2), body.solar td:nth-child(3) { text-align: center; white-space: nowrap; }
           body.solar td:nth-child(4) { text-align: right; white-space: nowrap; }
-          .totals { width: 38%; margin-left: auto; margin-top: 16px; background: transparent; border: 0; border-radius: 0; padding: 6px 13px; box-shadow: none; }
+          .totals { width: 38%; margin-left: auto; margin-top: 16px; background: transparent; border: 0; border-radius: 0; padding: 6px 13px; box-shadow: none; page-break-inside: avoid; break-inside: avoid; }
           .totals div { display: flex; justify-content: space-between; font-weight: 700; padding: 4px 0; font-size: 12px; }
           .totals div:last-child { border-top: 1px solid #d7dde5; margin-top: 4px; padding-top: 8px; color: #0f766e; font-size: 14px; }
-          .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.24in; color: #5f6672; font-size: 10px; border-top: 1px solid #d7dde5; padding-top: 9px; }
+          .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.42in; color: #5f6672; font-size: 10px; border-top: 1px solid #d7dde5; padding-top: 9px; }
+          .quote-page .footer { position: static; left: auto; right: auto; bottom: auto; margin-top: auto; page-break-inside: avoid; break-inside: avoid; }
           .footer-grid { display: grid; grid-template-columns: 1fr 1.15fr 0.85fr 2.15fr; gap: 11px; align-items: start; }
           .footer-item { display: flex; gap: 6px; align-items: flex-start; }
           .footer-text { color: #5f6672; text-decoration: none; line-height: 1.25; }
@@ -2521,25 +2528,35 @@ function generateQuotePdf(quoteId) {
             .bank-item { border-right: 0; }
             .signature { grid-template-columns: 1fr; gap: 14px; }
             .footer { left: 12px; right: 12px; bottom: 14px; font-size: 8.2px; padding-top: 7px; }
+            .quote-page { overflow: visible; }
+            .quote-page .footer { margin-top: 18px; }
             .footer-grid { grid-template-columns: 1fr 1fr; gap: 7px 9px; }
             .footer-icon { width: 15px; height: 15px; min-width: 15px; }
             .footer-icon svg { width: 9px; height: 9px; }
             .footer-address { padding-left: 21px; font-size: 7.6px; line-height: 1.2; }
           }
           @media screen {
-            body { padding-top: 62px; background: #e8edf2; }
+            body { padding-top: 62px !important; background: #e8edf2; }
             .pdf-return-bar { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: center; pointer-events: none; }
             .pdf-return-button { min-height: 44px; border: 0; border-radius: 999px; background: #203a49; color: #ffffff; box-shadow: 0 12px 28px rgba(15,23,42,0.24); cursor: pointer; font: 800 14px Arial, sans-serif; padding: 0 20px; pointer-events: auto; }
             .pdf-return-button span { color: #eba83a; }
           }
-          @media print { body { padding-top: 0; } button, .pdf-return-bar { display: none !important; } .page { width: 8.5in; } }
+          @media print {
+            body { padding-top: 0 !important; }
+            button, .pdf-return-bar { display: none !important; }
+            .page { width: 8.5in; overflow: hidden; }
+            .quote-page { display: block; min-height: auto; overflow: visible; }
+            .quote-page .content { display: block; }
+            .quote-page .footer { position: static; margin-top: 0.18in; }
+            .page:last-of-type { page-break-after: auto; break-after: auto; }
+          }
         </style>
       </head>
       <body class="${quoteType}">
         <div class="pdf-return-bar">
           <button class="pdf-return-button" type="button" onclick="if (window.opener && !window.opener.closed) { window.close(); } else { window.location.href='${crmHomeUrl}'; }"><span>←</span> Volver al CRM</button>
         </div>
-        <section class="page">
+        <section class="page quote-page">
           <div class="watermark"></div>
           <div class="content">
             <div class="hero">
