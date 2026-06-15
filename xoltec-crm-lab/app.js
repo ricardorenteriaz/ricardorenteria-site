@@ -2332,7 +2332,7 @@ function generateQuotePdf(quoteId) {
         </tr>
       `,
     );
-  const firstProductPageSize = quoteType === "maintenance" ? 14 : 10;
+  const firstProductPageSize = quoteType === "maintenance" ? 13 : 10;
   const nextProductPageSize = quoteType === "maintenance" ? 14 : 12;
   const productRowPages = paginateQuoteRows(productRows, firstProductPageSize, nextProductPageSize);
   const tableHead = `
@@ -2438,7 +2438,6 @@ function generateQuotePdf(quoteId) {
           .footer-icon svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
           .footer-address { color: #6b7280; display: block; margin-top: 2px; padding-left: 24px; font-size: 9.2px; line-height: 1.25; }
           .footer a, .footer a:visited { color: #5f6672 !important; text-decoration: none !important; }
-          .page + .page { page-break-before: always; break-before: page; }
           .page-break { page-break-before: always; break-before: page; }
           .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 15px; }
           .section-title::before { content: ""; width: 34px; height: 4px; border-radius: 99px; background: #eba83a; }
