@@ -2429,22 +2429,21 @@ function generateQuotePdf(quoteId) {
           .bank-item span { color: #6b7280; font-size: 8.8px; font-weight: 800; letter-spacing: 0.55px; text-transform: uppercase; }
           .bank-item strong { color: #17202b; font-size: 11px; line-height: 1.25; }
           .invoice-note { margin: 0; padding: 10px 12px; color: #4b5563; font-size: 10px; line-height: 1.35; background: #f8fafc; }
-          .solar-map-hero { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; border-bottom: 1px solid #d7dde5; padding-bottom: 14px; margin-bottom: 18px; }
-          .solar-map-hero img { width: 124px; height: auto; }
-          .solar-map-kicker { width: fit-content; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(235,168,58,0.16); color: #7a520f; font-size: 10px; font-weight: 900; letter-spacing: 1.2px; padding: 7px 12px; text-transform: uppercase; }
-          .solar-map-kicker::before { content: ""; width: 18px; height: 3px; border-radius: 99px; background: #eba83a; }
-          .solar-map-hero h1 { color: #203a49; font-size: 27px; line-height: 1.04; margin: 12px 0 8px; max-width: 520px; }
-          .solar-map-hero p { color: #5f6672; font-size: 12px; line-height: 1.42; margin: 0; max-width: 560px; }
-          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 42px 16px; position: relative; margin-top: 8px; }
-          .solar-arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-          .solar-node { min-height: 112px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.9); padding: 13px; box-shadow: 0 10px 22px rgba(15,23,42,0.06); position: relative; z-index: 1; }
-          .solar-node-head { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
-          .solar-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; }
-          .solar-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+          .solar-map-hero { background: #203a49; color: #ffffff; border-radius: 16px; padding: 18px 22px; display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
+          .solar-map-hero img { width: 132px; height: auto; }
+          .solar-map-kicker { display: block; color: #eba83a; font-size: 11px; font-weight: 900; letter-spacing: 1.4px; margin-bottom: 5px; text-transform: uppercase; }
+          .solar-map-hero h1 { color: #ffffff; font-size: 23px; line-height: 1.06; margin: 0 0 7px; max-width: 520px; }
+          .solar-map-hero p { color: rgba(255,255,255,0.82); font-size: 11.5px; line-height: 1.38; margin: 0; max-width: 560px; }
+          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px 28px; position: relative; margin-top: 8px; }
+          .solar-arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
+          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.9)); }
+          .solar-node { min-height: 94px; border: 1px solid #d7dde5; border-radius: 12px; background: rgba(255,255,255,0.95); padding: 10px 11px; box-shadow: 0 8px 18px rgba(15,23,42,0.06); position: relative; z-index: 1; }
+          .solar-node-head { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+          .solar-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; }
+          .solar-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
           .solar-icon .cfe-mark { color: #18a058; font-size: 13px; font-weight: 900; letter-spacing: -0.6px; }
-          .solar-node h2 { color: #17202b; font-size: 13.5px; margin: 0; line-height: 1.15; }
-          .solar-node p { color: #4b5563; font-size: 10.5px; line-height: 1.35; margin: 0; }
+          .solar-node h2 { color: #17202b; font-size: 12.5px; margin: 0; line-height: 1.12; }
+          .solar-node p { color: #4b5563; font-size: 9.7px; line-height: 1.3; margin: 0; }
           .solar-node.accent .solar-icon { color: #18a058; background: #ecfdf5; border-color: #b7ebcf; }
           .solar-node.gold .solar-icon { color: #b7791f; background: #fff8e8; border-color: #f0d7a0; }
           .solar-stats-title { display: flex; align-items: center; gap: 10px; color: #203a49; font-size: 16px; margin: 18px 0 10px; }
@@ -2691,11 +2690,11 @@ function generateQuotePdf(quoteId) {
                     <path d="M0,0 L8,4 L0,8 Z" fill="#18a058"></path>
                   </marker>
                 </defs>
-                <path d="M225 56 H252" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M468 56 H495" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M600 112 L115 174" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M600 112 L360 174" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M600 112 L600 174" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M205 47 H258" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M462 47 H515" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M615 96 V122 H105 V150" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M205 198 H258" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M462 198 H515" marker-end="url(#solar-arrow-head)"></path>
               </svg>
               <article class="solar-node">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("panel")}</span><h2>1. Paneles</h2></div>
