@@ -2397,7 +2397,7 @@ function generateQuotePdf(quoteId) {
           html, body { margin: 0 !important; padding: 0 !important; }
           body { color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
           .pdf-return-bar { display: none; }
-          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.98in; position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.98in; position: relative; overflow: hidden; page-break-after: auto; break-after: auto; }
           .quote-page { overflow: visible; display: flex; flex-direction: column; }
           .quote-page .content { flex: 1 0 auto; display: flex; flex-direction: column; }
           .product-page { padding-top: 0.72in; overflow: hidden; }
@@ -2438,7 +2438,8 @@ function generateQuotePdf(quoteId) {
           .footer-icon svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
           .footer-address { color: #6b7280; display: block; margin-top: 2px; padding-left: 24px; font-size: 9.2px; line-height: 1.25; }
           .footer a, .footer a:visited { color: #5f6672 !important; text-decoration: none !important; }
-          .page-break { page-break-before: always; }
+          .page + .page { page-break-before: always; break-before: page; }
+          .page-break { page-break-before: always; break-before: page; }
           .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 15px; }
           .section-title::before { content: ""; width: 34px; height: 4px; border-radius: 99px; background: #eba83a; }
           .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
@@ -2611,7 +2612,7 @@ function generateQuotePdf(quoteId) {
             .product-page { min-height: 11in; overflow: hidden; }
             .product-page .content { min-height: calc(11in - 1.7in); }
             .product-page .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.42in; margin-top: 0; }
-            .page:last-of-type { page-break-after: auto; break-after: auto; }
+            .page { page-break-after: auto; break-after: auto; }
           }
         </style>
       </head>
