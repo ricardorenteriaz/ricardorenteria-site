@@ -2281,6 +2281,20 @@ function quoteCommercialTerms(type, total, advancePercent, balancePercent) {
   `;
 }
 
+function paginateQuoteRows(rows, firstPageSize, nextPageSize) {
+  const pages = [];
+  let cursor = 0;
+  pages.push(rows.slice(cursor, cursor + firstPageSize));
+  cursor += firstPageSize;
+
+  while (cursor < rows.length) {
+    pages.push(rows.slice(cursor, cursor + nextPageSize));
+    cursor += nextPageSize;
+  }
+
+  return pages;
+}
+
 function generateQuotePdf(quoteId) {
   const quote = state.quoteClients.find((item) => item.id === quoteId);
   if (!quote) return;
@@ -2306,7 +2320,7 @@ function generateQuotePdf(quoteId) {
   const userSignature = preparedBy.signature
     ? `<img class="signature-image" src="${preparedBy.signature}" alt="Firma de ${escapeHtml(preparedBy.name)}" />`
     : "";
-  const rows = (quote.products || [])
+  const productRows = (quote.products || [])
     .map(
       (product) => `
         <tr>
@@ -2317,9 +2331,49 @@ function generateQuotePdf(quoteId) {
           <td>${money.format(product.lineTotal)}</td>
         </tr>
       `,
-    )
-    .join("");
+    );
+  const firstProductPageSize = quoteType === "maintenance" ? 14 : 10;
+  const nextProductPageSize = quoteType === "maintenance" ? 14 : 12;
+  const productRowPages = paginateQuoteRows(productRows, firstProductPageSize, nextProductPageSize);
+  const tableHead = `
+    <thead>
+      <tr>
+        <th>DESCRIPCIÓN</th>
+        ${quoteType === "maintenance" ? "<th>ÁREA A TRABAJAR</th>" : ""}
+        <th>CANTIDAD</th>
+        <th>PRECIO UNITARIO</th>
+        <th>TOTALES</th>
+      </tr>
+    </thead>
+  `;
+  const totalsBlock = `
+    <div class="totals">
+      <div><span>SUBTOTAL</span><span>${money.format(subtotal)}</span></div>
+      ${discountRow}
+      <div><span>IVA</span><span>${money.format(iva)}</span></div>
+      <div><span>TOTAL</span><span>${money.format(total)}</span></div>
+    </div>
+  `;
   const footer = quotePdfFooter();
+  const continuationProductPages = productRowPages
+    .slice(1)
+    .map((pageRows, index, pages) => {
+      const isLastProductPage = index === pages.length - 1;
+      return `
+        <section class="page quote-page product-page">
+          <div class="watermark soft"></div>
+          <div class="content product-continuation">
+            <table>
+              ${tableHead}
+              <tbody>${pageRows.join("")}</tbody>
+            </table>
+            ${isLastProductPage ? totalsBlock : ""}
+          </div>
+          ${isLastProductPage ? footer : ""}
+        </section>
+      `;
+    })
+    .join("");
   const logoUrl = new URL("assets/xoltec-logo.png", window.location.href).href;
   const crmHomeUrl = new URL("./", window.location.href).href;
 
@@ -2343,9 +2397,11 @@ function generateQuotePdf(quoteId) {
           html, body { margin: 0 !important; padding: 0 !important; }
           body { color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
           .pdf-return-bar { display: none; }
-          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.98in; position: relative; overflow: hidden; }
+          .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.98in; position: relative; overflow: hidden; page-break-after: always; break-after: page; }
           .quote-page { overflow: visible; display: flex; flex-direction: column; }
           .quote-page .content { flex: 1 0 auto; display: flex; flex-direction: column; }
+          .product-page { padding-top: 0.72in; overflow: hidden; }
+          .product-continuation { min-height: calc(11in - 1.7in); }
           .watermark { position: absolute; left: 1.35in; right: 1.35in; top: 4.15in; height: 3.4in; background: url("${logoUrl}") center / contain no-repeat; opacity: 0.16; z-index: 0; pointer-events: none; }
           .watermark.soft { top: 3.05in; opacity: 0.12; }
           .content { position: relative; z-index: 1; }
@@ -2374,6 +2430,7 @@ function generateQuotePdf(quoteId) {
           .totals div:last-child { border-top: 1px solid #d7dde5; margin-top: 4px; padding-top: 8px; color: #0f766e; font-size: 14px; }
           .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.42in; color: #5f6672; font-size: 10px; border-top: 1px solid #d7dde5; padding-top: 9px; }
           .quote-page .footer { position: static; left: auto; right: auto; bottom: auto; margin-top: auto; page-break-inside: avoid; break-inside: avoid; }
+          .product-page .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.42in; margin-top: 0; }
           .footer-grid { display: grid; grid-template-columns: 1fr 1.15fr 0.85fr 2.15fr; gap: 11px; align-items: start; }
           .footer-item { display: flex; gap: 6px; align-items: flex-start; }
           .footer-text { color: #5f6672; text-decoration: none; line-height: 1.25; }
@@ -2505,6 +2562,8 @@ function generateQuotePdf(quoteId) {
             html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
             body { background: #e8edf2; }
             .page { width: 100%; max-width: 100vw; min-height: 100dvh; padding: 14px 12px 92px; background: #ffffff; box-shadow: 0 10px 24px rgba(15,23,42,0.14); }
+            .product-page { padding-top: 22px; }
+            .product-continuation { min-height: calc(100dvh - 116px); }
             .page + .page { margin-top: 14px; }
             .hero { border-radius: 10px; padding: 13px 14px; }
             .hero img { width: 118px; }
@@ -2530,6 +2589,7 @@ function generateQuotePdf(quoteId) {
             .footer { left: 12px; right: 12px; bottom: 14px; font-size: 8.2px; padding-top: 7px; }
             .quote-page { overflow: visible; }
             .quote-page .footer { margin-top: 18px; }
+            .product-page .footer { position: absolute; left: 12px; right: 12px; bottom: 14px; margin-top: 0; }
             .footer-grid { grid-template-columns: 1fr 1fr; gap: 7px 9px; }
             .footer-icon { width: 15px; height: 15px; min-width: 15px; }
             .footer-icon svg { width: 9px; height: 9px; }
@@ -2548,6 +2608,9 @@ function generateQuotePdf(quoteId) {
             .quote-page { display: block; min-height: auto; overflow: visible; }
             .quote-page .content { display: block; }
             .quote-page .footer { position: static; margin-top: 0.18in; }
+            .product-page { min-height: 11in; overflow: hidden; }
+            .product-page .content { min-height: calc(11in - 1.7in); }
+            .product-page .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.42in; margin-top: 0; }
             .page:last-of-type { page-break-after: auto; break-after: auto; }
           }
         </style>
@@ -2579,26 +2642,14 @@ function generateQuotePdf(quoteId) {
               <strong>Instalación:</strong> ${escapeHtml(installationAddress)}
             </div>
             <table>
-              <thead>
-                <tr>
-                  <th>DESCRIPCIÓN</th>
-                  ${quoteType === "maintenance" ? "<th>ÁREA A TRABAJAR</th>" : ""}
-                  <th>CANTIDAD</th>
-                  <th>PRECIO UNITARIO</th>
-                  <th>TOTALES</th>
-                </tr>
-              </thead>
-              <tbody>${rows}</tbody>
+              ${tableHead}
+              <tbody>${(productRowPages[0] || []).join("")}</tbody>
             </table>
-            <div class="totals">
-              <div><span>SUBTOTAL</span><span>${money.format(subtotal)}</span></div>
-              ${discountRow}
-              <div><span>IVA</span><span>${money.format(iva)}</span></div>
-              <div><span>TOTAL</span><span>${money.format(total)}</span></div>
-            </div>
+            ${productRowPages.length === 1 ? totalsBlock : ""}
           </div>
-          ${footer}
+          ${productRowPages.length === 1 ? footer : ""}
         </section>
+        ${continuationProductPages}
         <section class="page page-break ${quoteType === "maintenance" ? "maintenance-commercial" : ""}">
           <div class="watermark soft"></div>
           <div class="content">
