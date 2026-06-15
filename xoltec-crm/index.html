@@ -7,15 +7,16 @@
     <meta name="apple-mobile-web-app-title" content="XOLTEC CRM" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <base href="/xoltec-crm/" />
     <title>XOLTEC CRM</title>
-    <link rel="manifest" href="manifest.webmanifest?v=20260525-08" />
+    <link rel="manifest" href="manifest.webmanifest?v=20260615-01" />
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260525-08" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/xoltec-app-icon-192.png?v=20260525-08" />
     <link rel="icon" type="image/png" sizes="512x512" href="assets/xoltec-app-icon-512.png?v=20260525-08" />
-    <link rel="stylesheet" href="styles.css?v=20260525-08" />
+    <link rel="stylesheet" href="styles.css?v=20260614-05" />
     <link rel="stylesheet" href="desktop.css?v=20260525-08" media="(min-width: 621px)" />
-    <link rel="stylesheet" href="mobile.css?v=20260525-08" media="(max-width: 620px)" />
-    <link rel="stylesheet" href="project-auth.css?v=20260525-01" />
+    <link rel="stylesheet" href="mobile.css?v=20260615-04" media="(max-width: 620px)" />
+    <link rel="stylesheet" href="project-auth.css?v=20260615-01" />
   </head>
   <body class="project-locked">
     <section class="project-gate" id="project-gate" aria-labelledby="project-gate-title">
@@ -46,8 +47,8 @@
             <h1>Iniciar sesión</h1>
           </div>
           <label>
-            Usuario
-            <input id="login-user" type="text" autocomplete="username" required />
+            Correo
+            <input id="login-user" type="email" autocomplete="email" required />
           </label>
           <label>
             Contraseña
@@ -79,9 +80,9 @@
           <button class="nav-item" data-view="quoteHistory" type="button">Cotizaciones</button>
           <button class="nav-item" data-view="products" type="button">Productos</button>
           <button class="nav-item super-admin-only hidden" data-view="users" type="button">Usuarios</button>
+          <button class="nav-item super-admin-only hidden" data-view="maintenance" type="button">Mantenimiento</button>
         </nav>
         <div class="sidebar-footer">
-          <button class="sidebar-export super-admin-only hidden" id="download-backup-button" type="button">Respaldar JSON</button>
           <button class="sidebar-logout" id="logout-button" type="button">Cerrar sesión</button>
         </div>
       </aside>
@@ -159,6 +160,13 @@
                 <h2 id="quote-form-title">Nueva cotización</h2>
                 <span class="pill" id="quote-form-mode">Cliente + productos</span>
               </div>
+              <label>
+                Cotización para:
+                <select id="quote-type">
+                  <option value="solar">PANELES SOLARES</option>
+                  <option value="maintenance">MANTENIMIENTO Y OBRA CIVIL</option>
+                </select>
+              </label>
               <div class="form-row">
                 <label>
                   Contacto
@@ -291,13 +299,6 @@
               </div>
             </form>
 
-            <section class="panel">
-              <div class="panel-header">
-                <h2>Última cotización capturada</h2>
-                <span id="quote-latest-count" class="pill">0</span>
-              </div>
-              <div class="quote-client-list" id="quote-latest-list"></div>
-            </section>
           </div>
         </section>
 
@@ -322,16 +323,24 @@
                 Descripción
                 <input id="product-name" type="text" required />
               </label>
+              <label>
+                Área a trabajar
+                <input id="product-work-area" type="text" placeholder="Ej. Techo, azotea, nave industrial, estacionamiento" />
+              </label>
               <div class="form-row">
                 <label>
                   Precio base
-                  <input id="product-price" type="number" min="0" step="100" required />
+                  <input id="product-price" type="number" min="0" step="0.01" required />
                 </label>
                 <label>
                   Cantidad sugerida
                   <input id="product-quantity" type="number" min="1" step="1" value="1" required />
                 </label>
               </div>
+              <label class="checkbox-row form-checkbox-row">
+                <input id="product-is-lot" type="checkbox" />
+                <span>Mostrar cantidad como lote</span>
+              </label>
               <div class="quote-form-actions">
                 <button class="primary-button" id="product-save-button" type="submit">Agregar producto</button>
                 <button class="ghost-button hidden" id="product-cancel-edit" type="button">Cancelar edición</button>
@@ -357,8 +366,8 @@
               </div>
               <div class="form-row">
                 <label>
-                  Usuario
-                  <input id="new-user-login" type="text" autocomplete="off" required />
+                  Correo de acceso
+                  <input id="new-user-login" type="email" autocomplete="off" required />
                 </label>
                 <label>
                   Contraseña
@@ -372,6 +381,14 @@
               <label>
                 Puesto
                 <input id="new-user-position" type="text" required />
+              </label>
+              <label>
+                Rol
+                <select id="new-user-role">
+                  <option value="seller">Vendedor</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super admin</option>
+                </select>
               </label>
               <div class="signature-editor">
                 <div class="panel-header">
@@ -401,14 +418,18 @@
               <div class="product-list" id="user-list"></div>
             </section>
 
-            <section class="panel admin-backup-panel super-admin-only hidden">
+          </div>
+        </section>
+
+        <section class="view" id="maintenance-view" aria-labelledby="view-title">
+          <div class="maintenance-layout">
+            <section class="panel admin-backup-panel">
               <div class="panel-header">
                 <h2>Respaldos del CRM</h2>
                 <span class="pill">Super admin</span>
               </div>
               <p class="backup-copy">
-                Descarga un respaldo completo de clientes, cotizaciones, productos, usuarios y firmas.
-                Guárdalo en iCloud Drive, Drive o correo para poder restaurarlo si cambia de equipo.
+                Descarga o copia un respaldo completo del CRM. Usa restauración solo cuando quieras recuperar datos desde un archivo o texto de respaldo.
               </p>
               <div class="quote-form-actions">
                 <button class="primary-button" id="admin-download-backup" type="button">Descargar respaldo</button>
@@ -471,6 +492,6 @@
     </dialog>
 
     <script src="project-auth.js?v=20260526-02"></script>
-    <script src="app.js?v=20260526-03"></script>
+    <script src="app.js?v=20260615-06"></script>
   </body>
 </html>

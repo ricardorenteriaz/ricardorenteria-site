@@ -1,4 +1,21 @@
 const stages = ["Prospecto", "Calificado", "Propuesta", "Negociacion", "Ganado"];
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+const XOLTEC_ORGANIZATION_ID = "00000000-0000-4000-8000-000000000001";
+const supabaseClient =
+  window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+const supabaseSignupClient =
+  window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
+
 const starterUsers = [
   {
     user: "ricardo",
@@ -13,36 +30,48 @@ const starterProductCatalog = [
   {
     id: "panel-longi-640",
     name: "Panel solar marca SOL LONGI Mod 640 HIMO 6 NYTPE",
+    workArea: "Generación fotovoltaica",
+    isLot: false,
     price: 4800,
     defaultQuantity: 14,
   },
   {
     id: "inversor-growatt-max-9000",
     name: "Inversor GROWAT MAX 9,000 KW Mod TL",
+    workArea: "Conversión eléctrica",
+    isLot: false,
     price: 16000,
     defaultQuantity: 1,
   },
   {
     id: "kit-estructural-ajustable",
     name: "KIT estructural Ajustable a 14 paneles solares",
+    workArea: "Estructura y montaje",
+    isLot: true,
     price: 15500,
     defaultQuantity: 1,
   },
   {
     id: "cables-conectores-accesorios",
     name: "Cables conectores, accesorios eléctricos",
+    workArea: "Instalación eléctrica",
+    isLot: true,
     price: 12350,
     defaultQuantity: 1,
   },
   {
     id: "tramites-gestorias",
     name: "Tramites y Gestorías",
+    workArea: "Gestión CFE",
+    isLot: true,
     price: 5500,
     defaultQuantity: 1,
   },
   {
     id: "mano-obra",
     name: "Mano de Obra",
+    workArea: "Mano de obra",
+    isLot: true,
     price: 20500,
     defaultQuantity: 1,
   },
@@ -166,6 +195,7 @@ let editingProductId = null;
 let editingUserName = null;
 let pricesUnlocked = false;
 let signatureDataUrl = "";
+let usersRefreshPromise = null;
 
 const money = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -182,6 +212,7 @@ const views = {
   quoteHistory: document.querySelector("#quote-history-view"),
   products: document.querySelector("#products-view"),
   users: document.querySelector("#users-view"),
+  maintenance: document.querySelector("#maintenance-view"),
 };
 
 const titles = {
@@ -193,6 +224,7 @@ const titles = {
   quoteHistory: "Cotizaciones",
   products: "Productos",
   users: "Usuarios",
+  maintenance: "Mantenimiento",
 };
 
 document.querySelectorAll(".nav-item").forEach((button) => {
@@ -214,10 +246,10 @@ document.querySelector("#deal-form").addEventListener("submit", addDeal);
 document.querySelector("#task-form").addEventListener("submit", addTask);
 document.querySelector("#quote-client-form").addEventListener("submit", addQuoteClient);
 document.querySelector("#quote-client-list").addEventListener("click", handleQuoteActionClick);
-document.querySelector("#quote-latest-list").addEventListener("click", handleQuoteActionClick);
 document.querySelector("#quote-cancel-edit").addEventListener("click", resetQuoteForm);
 document.querySelector("#unlock-prices").addEventListener("click", unlockQuotePrices);
 document.querySelector("#same-install-address").addEventListener("change", syncInstallAddress);
+document.querySelector("#quote-type").addEventListener("change", renderQuoteProducts);
 document.querySelector("#quote-discount").addEventListener("input", renderQuoteProductTotals);
 document.querySelector("#quote-commission-percent").addEventListener("input", renderQuoteProductTotals);
 document.querySelector("#product-form").addEventListener("submit", addProduct);
@@ -235,7 +267,6 @@ document.querySelector("#login-form").addEventListener("submit", login);
 document.querySelector("#logout-button").addEventListener("click", logout);
 document.querySelector("#mobile-menu-toggle").addEventListener("click", toggleMobileMenu);
 document.querySelector(".sidebar").addEventListener("click", closeMobileMenuFromBackdrop);
-document.querySelector("#download-backup-button").addEventListener("click", downloadCrmBackup);
 document.querySelector("#admin-download-backup").addEventListener("click", downloadCrmBackup);
 document.querySelector("#admin-copy-backup").addEventListener("click", copyCrmBackup);
 document.querySelector("#admin-import-backup-text").addEventListener("click", importCrmData);
@@ -250,20 +281,71 @@ syncAuthView();
 render();
 recoverSavedBrowserData();
 
-function login(event) {
+async function restoreSupabaseSession() {
+  if (!supabaseClient) return;
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data.session) return;
+
+  const profile = await loadSupabaseProfile(data.session.user.id);
+  if (!profile) return;
+
+  sessionStorage.setItem("ventas-crm-authenticated", "true");
+  sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(profileToLocalUser(profile)));
+  sessionStorage.setItem("ventas-crm-auth-provider", "supabase");
+  await loadSupabaseState();
+  syncAuthView();
+}
+
+async function login(event) {
   event.preventDefault();
-  const user = normalizeSearchText(document.querySelector("#login-user").value);
-  const password = document.querySelector("#login-password").value;
+  const user = document.querySelector("#login-user").value.trim().toLowerCase();
+  const password = cleanPassword(document.querySelector("#login-password").value);
   const error = document.querySelector("#auth-error");
-  const matchedUser = state.users.find((item) => normalizeSearchText(item.user) === user && item.password === password);
+
+  if (supabaseClient && user.includes("@")) {
+    error.textContent = "Validando acceso...";
+    const { data, error: authError } = await supabaseClient.auth.signInWithPassword({
+      email: user,
+      password,
+    });
+
+    if (authError || !data.user) {
+      error.textContent = friendlyAuthError(authError);
+      return;
+    }
+
+    const profile = await loadSupabaseProfile(data.user.id);
+    if (!profile) {
+      await supabaseClient.auth.signOut();
+      error.textContent = "Tu usuario existe, pero falta el perfil del CRM.";
+      return;
+    }
+
+    const currentUser = profileToLocalUser(profile);
+    sessionStorage.setItem("ventas-crm-authenticated", "true");
+    sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(currentUser));
+    sessionStorage.setItem("ventas-crm-auth-provider", "supabase");
+    error.textContent = "";
+    event.target.reset();
+    await loadSupabaseState();
+    syncAuthView();
+    setView("quotes");
+    document.querySelector(".sidebar").classList.remove("menu-open");
+    return;
+  }
+
+  const matchedUser = state.users.find((item) => item.user === user && item.password === password);
 
   if (!matchedUser) {
-    error.textContent = "Usuario o contraseña incorrectos.";
+    error.textContent = supabaseClient
+      ? "Usa tu correo de Supabase para entrar al laboratorio."
+      : "Usuario o contraseña incorrectos.";
     return;
   }
 
   sessionStorage.setItem("ventas-crm-authenticated", "true");
   sessionStorage.setItem("ventas-crm-current-user", JSON.stringify(matchedUser));
+  sessionStorage.setItem("ventas-crm-auth-provider", "local");
   error.textContent = "";
   event.target.reset();
   syncAuthView();
@@ -271,9 +353,13 @@ function login(event) {
   document.querySelector(".sidebar").classList.remove("menu-open");
 }
 
-function logout() {
+async function logout() {
+  if (supabaseClient && sessionStorage.getItem("ventas-crm-auth-provider") === "supabase") {
+    await supabaseClient.auth.signOut();
+  }
   sessionStorage.removeItem("ventas-crm-authenticated");
   sessionStorage.removeItem("ventas-crm-current-user");
+  sessionStorage.removeItem("ventas-crm-auth-provider");
   document.querySelector("#search-input").value = "";
   syncAuthView();
 }
@@ -288,11 +374,180 @@ function populateStateSelects() {
   });
 }
 
+async function loadSupabaseProfile(userId) {
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, username, full_name, position, role, signature_url")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.warn("No pude cargar el perfil de Supabase.", error);
+    return null;
+  }
+
+  return data;
+}
+
+function profileToLocalUser(profile) {
+  return {
+    id: profile.id,
+    user: profile.username,
+    password: "",
+    name: profile.full_name,
+    position: profile.position,
+    signature: profile.signature_url || "",
+    superAdmin: profile.role === "super_admin",
+    role: profile.role,
+  };
+}
+
+async function loadSupabaseState() {
+  if (!supabaseClient) return;
+
+  const [productsResult, quotesResult, dealsResult, tasksResult, profilesResult] = await Promise.all([
+    fetchSupabaseProducts(),
+    supabaseClient
+      .from("quotes")
+      .select("*, quote_items(*)")
+      .order("created_at", { ascending: false }),
+    supabaseClient.from("deals").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("tasks").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("profiles").select("id, username, full_name, position, role, signature_url"),
+  ]);
+
+  const failed = [productsResult, quotesResult, dealsResult, tasksResult, profilesResult].find((result) => result.error);
+  if (failed) {
+    console.warn("No pude cargar datos de Supabase.", failed.error);
+    window.alert(`No pude cargar datos de Supabase: ${failed.error.message}`);
+    return;
+  }
+
+  state.products = productsResult.data.map(dbProductToLocal);
+  state.quoteClients = quotesResult.data.map(dbQuoteToLocal);
+  state.deals = dealsResult.data.map(dbDealToLocal);
+  state.tasks = tasksResult.data.map(dbTaskToLocal);
+  state.users = profilesResult.data.map(profileToLocalUser);
+  saveState();
+  renderQuoteProducts();
+  render();
+}
+
+async function fetchSupabaseProducts() {
+  const result = await supabaseClient
+    .from("products")
+    .select("id, legacy_id, name, work_area, is_lot, price, default_quantity")
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+
+  if (!result.error || !isMissingOptionalProductColumn(result.error)) {
+    return result;
+  }
+
+  return supabaseClient
+    .from("products")
+    .select("id, legacy_id, name, price, default_quantity")
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+}
+
+function isMissingOptionalProductColumn(error) {
+  const message = String((error && error.message) || "");
+  return message.includes("work_area") || message.includes("is_lot");
+}
+
+function dbProductToLocal(product) {
+  return {
+    id: product.id,
+    legacyId: product.legacy_id,
+    name: product.name,
+    workArea: product.work_area || "",
+    isLot: Boolean(product.is_lot),
+    price: Number(product.price) || 0,
+    defaultQuantity: Number(product.default_quantity) || 1,
+  };
+}
+
+function dbQuoteToLocal(quote) {
+  const products = (quote.quote_items || [])
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .map((item) => ({
+      id: item.product_id || item.legacy_product_id || item.id,
+      name: item.name,
+      workArea: item.work_area || "",
+      isLot: Boolean(item.is_lot),
+      basePrice: Number(item.base_price) || Number(item.price) || 0,
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 1,
+      defaultQuantity: Number(item.default_quantity) || 1,
+      lineTotal: Number(item.line_total) || 0,
+      baseLineTotal: Number(item.base_line_total) || 0,
+      commissionAdjustmentPercent: Number(item.commission_adjustment_percent) || 0,
+      commissionAdjustmentAmount: Number(item.commission_adjustment_amount) || 0,
+      selected: true,
+    }));
+
+  return {
+    id: quote.id,
+    company: quote.company,
+    quoteType: quote.quote_type || "solar",
+    taxId: quote.tax_id,
+    contact: quote.contact,
+    email: quote.email,
+    phone: quote.phone,
+    notes: quote.notes,
+    referredBy: quote.referred_by,
+    fiscalAddress: quote.fiscal_address || {},
+    installationAddress: quote.installation_address || {},
+    products,
+    discountPercent: Number(quote.discount_percent) || 0,
+    commissionPercent: Number(quote.commission_percent) || 0,
+    commissionAppliedPercent: Number(quote.commission_applied_percent) || 0,
+    commissionFor: quote.commission_for,
+    commissionAmount: Number(quote.commission_amount) || 0,
+    companyCommissionAmount: Number(quote.company_commission_amount) || 0,
+    advancePercent: Number(quote.advance_percent) || 70,
+    totals: {
+      subtotal: Number(quote.subtotal) || 0,
+      discountAmount: Number(quote.discount_amount) || 0,
+      iva: Number(quote.iva) || 0,
+      total: Number(quote.total) || 0,
+    },
+    createdAt: quote.created_at,
+    updatedAt: quote.updated_at,
+    preparedByUser: quote.prepared_by,
+  };
+}
+
+function dbDealToLocal(deal) {
+  return {
+    id: deal.id,
+    account: deal.account,
+    contact: deal.contact,
+    name: deal.name,
+    value: Number(deal.value) || 0,
+    stage: deal.stage,
+    next: deal.next_step,
+    activity: deal.activity,
+  };
+}
+
+function dbTaskToLocal(task) {
+  return {
+    id: task.id,
+    title: task.title,
+    account: task.account,
+    date: task.due_date,
+    done: Boolean(task.done),
+  };
+}
+
 function backupPayload() {
   return {
     app: "XOLTEC CRM",
-    version: "20260525-03",
+    version: "20260526-supabase",
     exportedAt: new Date().toISOString(),
+    source: isSupabaseSession() ? "supabase-cache" : "localStorage",
     data: state,
   };
 }
@@ -301,21 +556,25 @@ function encodedBackupPayload() {
   return btoa(unescape(encodeURIComponent(JSON.stringify(backupPayload()))));
 }
 
-function downloadCrmBackup() {
-  const payload = JSON.stringify(backupPayload(), null, 2);
+async function downloadCrmBackup() {
+  const backup = isSupabaseSession() ? await supabaseBackupPayload() : backupPayload();
+  if (!backup) return;
+  const payload = JSON.stringify(backup, null, 2);
   const blob = new Blob([payload], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `xoltec-crm-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = `xoltec-crm-${backup.source || "backup"}-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
 }
 
-function copyCrmBackup() {
-  const payload = encodedBackupPayload();
+async function copyCrmBackup() {
+  const backup = isSupabaseSession() ? await supabaseBackupPayload() : backupPayload();
+  if (!backup) return;
+  const payload = btoa(unescape(encodeURIComponent(JSON.stringify(backup))));
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard
       .writeText(payload)
@@ -324,6 +583,41 @@ function copyCrmBackup() {
   } else {
     window.prompt("Copia este texto para importarlo en el iPhone:", payload);
   }
+}
+
+async function supabaseBackupPayload() {
+  const [profilesResult, productsResult, quotesResult, quoteItemsResult, dealsResult, tasksResult] = await Promise.all([
+    supabaseClient.from("profiles").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("products").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("quotes").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("quote_items").select("*").order("sort_order", { ascending: true }),
+    supabaseClient.from("deals").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("tasks").select("*").order("created_at", { ascending: false }),
+  ]);
+  const failed = [profilesResult, productsResult, quotesResult, quoteItemsResult, dealsResult, tasksResult].find(
+    (result) => result.error,
+  );
+
+  if (failed) {
+    window.alert(`No pude generar el respaldo de Supabase: ${failed.error.message}`);
+    return null;
+  }
+
+  return {
+    app: "XOLTEC CRM",
+    version: "20260526-supabase",
+    exportedAt: new Date().toISOString(),
+    source: "supabase",
+    tables: {
+      profiles: profilesResult.data,
+      products: productsResult.data,
+      quotes: quotesResult.data,
+      quote_items: quoteItemsResult.data,
+      deals: dealsResult.data,
+      tasks: tasksResult.data,
+    },
+    data: state,
+  };
 }
 
 function exportCrmData() {
@@ -405,22 +699,54 @@ function syncAuthView() {
 
   if (!isAuthenticated) {
     document.querySelector("#login-user").focus();
-  } else if (!currentUser.superAdmin && views.users && views.users.classList.contains("active")) {
+  } else if (
+    !currentUser.superAdmin &&
+    ((views.users && views.users.classList.contains("active")) ||
+      (views.maintenance && views.maintenance.classList.contains("active")))
+  ) {
     setView("quotes");
   }
 }
 
 function setView(view) {
+  if (!views[view]) return;
   Object.values(views).forEach((section) => section.classList.remove("active"));
   views[view].classList.add("active");
   document.querySelector("#view-title").textContent = titles[view];
   document.body.dataset.view = view;
-  document.querySelector(".search").classList.toggle("hidden", view === "users");
-  if (view === "users") document.querySelector("#search-input").value = "";
+  const hideSearch = view === "users" || view === "maintenance";
+  document.querySelector(".search").classList.toggle("hidden", hideSearch);
+  if (hideSearch) document.querySelector("#search-input").value = "";
+  if (view === "users" && isSupabaseSession()) refreshSupabaseUsers();
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
   });
   document.querySelector(".sidebar").classList.remove("menu-open");
+}
+
+async function refreshSupabaseUsers() {
+  if (!supabaseClient) return;
+  if (usersRefreshPromise) return usersRefreshPromise;
+
+  usersRefreshPromise = supabaseClient
+    .from("profiles")
+    .select("id, username, full_name, position, role, signature_url")
+    .order("created_at", { ascending: true })
+    .then(({ data, error }) => {
+      if (error) {
+        console.warn("No pude recargar usuarios de Supabase.", error);
+        return;
+      }
+      state.users = data.map(profileToLocalUser);
+      saveState();
+      renderUsers();
+      syncAuthView();
+    })
+    .finally(() => {
+      usersRefreshPromise = null;
+    });
+
+  return usersRefreshPromise;
 }
 
 function toggleMobileMenu() {
@@ -524,16 +850,19 @@ function renderTasks() {
     tasks.map(taskItem).join("") || emptyState("No hay tareas que coincidan");
 
   document.querySelectorAll("[data-task-id]").forEach((checkbox) => {
-    checkbox.addEventListener("change", () => {
+    checkbox.addEventListener("change", async () => {
       const task = state.tasks.find((item) => item.id === checkbox.dataset.taskId);
       task.done = checkbox.checked;
+      if (isSupabaseSession()) {
+        await saveSupabaseTask(task, true);
+      }
       saveState();
       render();
     });
   });
 }
 
-function addDeal(event) {
+async function addDeal(event) {
   event.preventDefault();
   const deal = {
     id: createId(),
@@ -545,14 +874,25 @@ function addDeal(event) {
     next: document.querySelector("#deal-next").value.trim(),
     activity: "Hoy",
   };
-  state.deals.unshift(deal);
-  state.tasks.unshift({
+  const task = {
     id: createId(),
     title: deal.next,
     account: deal.account,
     date: todayPlus(2),
     done: false,
-  });
+  };
+
+  if (isSupabaseSession()) {
+    const savedDeal = await saveSupabaseDeal(deal);
+    if (!savedDeal) return;
+    deal.id = savedDeal.id;
+
+    const savedTask = await saveSupabaseTask(task);
+    if (savedTask) task.id = savedTask.id;
+  }
+
+  state.deals.unshift(deal);
+  state.tasks.unshift(task);
   saveState();
   event.target.reset();
   closeDealModal();
@@ -560,22 +900,76 @@ function addDeal(event) {
   render();
 }
 
-function addTask(event) {
+async function addTask(event) {
   event.preventDefault();
-  state.tasks.unshift({
+  const task = {
     id: createId(),
     title: document.querySelector("#task-title").value.trim(),
     account: document.querySelector("#task-account").value.trim(),
     date: document.querySelector("#task-date").value,
     done: false,
-  });
+  };
+
+  if (isSupabaseSession()) {
+    const savedTask = await saveSupabaseTask(task);
+    if (!savedTask) return;
+    task.id = savedTask.id;
+  }
+
+  state.tasks.unshift(task);
   saveState();
   event.target.reset();
   document.querySelector("#task-date").value = todayPlus(1);
   render();
 }
 
-function addQuoteClient(event) {
+async function saveSupabaseDeal(deal) {
+  const currentUser = getCurrentUser();
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    owner_id: currentUser.id || null,
+    account: deal.account,
+    contact: deal.contact,
+    name: deal.name,
+    value: deal.value,
+    stage: deal.stage,
+    next_step: deal.next,
+    activity: deal.activity,
+  };
+
+  const { data, error } = await supabaseClient.from("deals").insert(payload).select().single();
+  if (error) {
+    window.alert(`No pude guardar la oportunidad en Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data;
+}
+
+async function saveSupabaseTask(task, isEditing = false) {
+  const currentUser = getCurrentUser();
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    owner_id: currentUser.id || null,
+    title: task.title,
+    account: task.account,
+    due_date: task.date,
+    done: task.done,
+  };
+
+  const query = isEditing
+    ? supabaseClient.from("tasks").update(payload).eq("id", task.id).select().single()
+    : supabaseClient.from("tasks").insert(payload).select().single();
+  const { data, error } = await query;
+  if (error) {
+    window.alert(`No pude guardar la tarea en Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data;
+}
+
+async function addQuoteClient(event) {
   event.preventDefault();
   const products = selectedQuoteProducts();
   const totals = calculateQuoteTotals(products);
@@ -593,6 +987,7 @@ function addQuoteClient(event) {
   const quote = {
     id: editingQuoteId || createId(),
     company: document.querySelector("#quote-company").value.trim(),
+    quoteType: document.querySelector("#quote-type").value || "solar",
     taxId: document.querySelector("#quote-tax-id").value.trim(),
     contact: document.querySelector("#quote-contact").value.trim(),
     email: document.querySelector("#quote-email").value.trim(),
@@ -615,6 +1010,15 @@ function addQuoteClient(event) {
     updatedAt: editingQuoteId ? new Date().toISOString() : null,
   };
 
+  if (isSupabaseSession()) {
+    const savedQuote = await saveSupabaseQuote(quote, Boolean(editingQuoteId));
+    if (!savedQuote) return;
+    quote.id = savedQuote.id;
+    quote.createdAt = savedQuote.created_at;
+    quote.updatedAt = savedQuote.updated_at;
+    quote.preparedByUser = savedQuote.prepared_by;
+  }
+
   if (editingQuoteId) {
     state.quoteClients = state.quoteClients.map((item) => (item.id === editingQuoteId ? quote : item));
   } else {
@@ -626,16 +1030,101 @@ function addQuoteClient(event) {
   render();
 }
 
+async function saveSupabaseQuote(quote, isEditing) {
+  const currentUser = getCurrentUser();
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    prepared_by: currentUser.id || null,
+    company: quote.company,
+    quote_type: quote.quoteType || "solar",
+    tax_id: quote.taxId,
+    contact: quote.contact,
+    email: quote.email,
+    phone: quote.phone,
+    notes: quote.notes,
+    referred_by: quote.referredBy,
+    fiscal_address: quote.fiscalAddress,
+    installation_address: quote.installationAddress,
+    discount_percent: quote.discountPercent,
+    commission_percent: quote.commissionPercent,
+    commission_applied_percent: quote.commissionAppliedPercent,
+    commission_for: quote.commissionFor,
+    commission_amount: quote.commissionAmount,
+    company_commission_amount: quote.companyCommissionAmount,
+    advance_percent: quote.advancePercent,
+    subtotal: quote.totals.subtotal,
+    discount_amount: quote.totals.discountAmount,
+    iva: quote.totals.iva,
+    total: quote.totals.total,
+    updated_at: isEditing ? new Date().toISOString() : null,
+  };
+
+  const quoteQuery = isEditing
+    ? supabaseClient.from("quotes").update(payload).eq("id", quote.id).select().single()
+    : supabaseClient.from("quotes").insert(payload).select().single();
+  let { data: savedQuote, error: quoteError } = await quoteQuery;
+
+  if (quoteError && String(quoteError.message || "").includes("quote_type")) {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.quote_type;
+    const fallbackQuery = isEditing
+      ? supabaseClient.from("quotes").update(fallbackPayload).eq("id", quote.id).select().single()
+      : supabaseClient.from("quotes").insert(fallbackPayload).select().single();
+    const fallbackResult = await fallbackQuery;
+    savedQuote = fallbackResult.data;
+    quoteError = fallbackResult.error;
+  }
+
+  if (quoteError) {
+    window.alert(`No pude guardar la cotización en Supabase: ${quoteError.message}`);
+    return null;
+  }
+
+  if (isEditing) {
+    const { error: deleteError } = await supabaseClient.from("quote_items").delete().eq("quote_id", savedQuote.id);
+    if (deleteError) {
+      window.alert(`Guardé la cotización, pero no pude actualizar sus conceptos: ${deleteError.message}`);
+      return null;
+    }
+  }
+
+  const items = quote.products.map((product, index) => ({
+    quote_id: savedQuote.id,
+    product_id: isUuid(product.id) ? product.id : null,
+    legacy_product_id: product.legacyId || (!isUuid(product.id) ? product.id : null),
+    name: product.name,
+    work_area: product.workArea || "",
+    is_lot: Boolean(product.isLot),
+    base_price: product.basePrice || product.price,
+    price: product.price,
+    quantity: product.quantity,
+    default_quantity: product.defaultQuantity || 1,
+    line_total: product.lineTotal,
+    base_line_total: product.baseLineTotal || product.lineTotal,
+    commission_adjustment_percent: product.commissionAdjustmentPercent || 0,
+    commission_adjustment_amount: product.commissionAdjustmentAmount || 0,
+    sort_order: index,
+  }));
+
+  let { error: itemsError } = await supabaseClient.from("quote_items").insert(items);
+  if (itemsError && isMissingOptionalProductColumn(itemsError)) {
+    const fallbackItems = items.map(({ work_area, is_lot, ...item }) => item);
+    const fallbackResult = await supabaseClient.from("quote_items").insert(fallbackItems);
+    itemsError = fallbackResult.error;
+  }
+  if (itemsError) {
+    window.alert(`Guardé la cotización, pero no pude guardar sus conceptos: ${itemsError.message}`);
+    return null;
+  }
+
+  return savedQuote;
+}
+
 function renderQuoteClients() {
   const clients = filteredQuoteClients();
-  const latestQuote = state.quoteClients[0] ? [state.quoteClients[0]] : [];
-  document.querySelector("#quote-latest-count").textContent = String(latestQuote.length);
-  document.querySelector("#quote-latest-list").innerHTML =
-    latestQuote.map(quoteClientCard).join("") || emptyState("Aún no hay cotizaciones capturadas");
-
   document.querySelector("#quote-client-count").textContent = String(clients.length);
   document.querySelector("#quote-client-list").innerHTML =
-    clients.map(quoteClientCard).join("") || emptyState("No hay cotizaciones guardadas");
+    clients.map(quoteListItem).join("") || emptyState("No hay cotizaciones guardadas");
 }
 
 function handleQuoteActionClick(event) {
@@ -649,20 +1138,24 @@ function handleQuoteActionClick(event) {
 }
 
 function renderQuoteProducts() {
+  const showWorkArea = document.querySelector("#quote-type").value === "maintenance";
   document.querySelector("#quote-products").innerHTML = state.products
     .map(
       (product) => `
         <article class="quote-product-row">
           <label class="checkbox-row">
             <input class="quote-product-check" data-product-id="${product.id}" type="checkbox" />
-            <span>${escapeHtml(product.name)}</span>
+            <span>
+              ${escapeHtml(product.name)}
+              ${showWorkArea ? `<small>Área a trabajar: ${escapeHtml(product.workArea || "Sin especificar")}</small>` : ""}
+            </span>
           </label>
           <label class="quote-price-input">
             Precio
-            <input class="quote-product-price-input" data-product-id="${product.id}" type="number" min="0" step="100" value="${product.price}" ${pricesUnlocked ? "" : "disabled"} />
+            <input class="quote-product-price-input" data-product-id="${product.id}" type="number" min="0" step="0.01" value="${product.price}" ${pricesUnlocked ? "" : "disabled"} />
           </label>
           <label class="quote-quantity">
-            Cant.
+            ${product.isLot ? "Lote" : "Cant."}
             <input class="quote-product-quantity" data-product-id="${product.id}" type="number" min="1" step="1" value="${product.defaultQuantity}" />
           </label>
         </article>
@@ -685,6 +1178,7 @@ function renderQuoteProducts() {
 function resetQuoteForm() {
   editingQuoteId = null;
   document.querySelector("#quote-client-form").reset();
+  document.querySelector("#quote-type").disabled = false;
   document.querySelector("#same-install-address").checked = false;
   renderQuoteProducts();
   updateQuoteFormMode();
@@ -701,6 +1195,10 @@ function updateQuoteFormMode() {
   document.querySelector("#quote-save-button").textContent = isEditing
     ? "Guardar cambios"
     : "Guardar cotización";
+  document.querySelector("#quote-type").disabled = isEditing;
+  document.querySelector("#quote-type").title = isEditing
+    ? "El tipo de cotización queda fijo después de guardar."
+    : "";
   document.querySelector("#quote-cancel-edit").classList.toggle("hidden", !isEditing);
 }
 
@@ -710,6 +1208,8 @@ function editQuote(quoteId) {
 
   editingQuoteId = quote.id;
   setView("quotes");
+  document.querySelector("#quote-type").value = quote.quoteType || "solar";
+  renderQuoteProducts();
   document.querySelector("#quote-company").value = quote.company || "";
   document.querySelector("#quote-tax-id").value = quote.taxId || "";
   document.querySelector("#quote-contact").value = quote.contact || "";
@@ -752,11 +1252,21 @@ function applyQuoteProducts(products) {
 
 function unlockQuotePrices() {
   if (pricesUnlocked) return;
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.superAdmin) {
+    setQuotePricesUnlocked();
+    return;
+  }
+
   const password = window.prompt("Contraseña de administrador para modificar precios:");
   if (!isAdminPassword(password)) {
     window.alert("Contraseña incorrecta.");
     return;
   }
+  setQuotePricesUnlocked();
+}
+
+function setQuotePricesUnlocked() {
   pricesUnlocked = true;
   document.querySelectorAll(".quote-product-price-input").forEach((input) => {
     input.disabled = false;
@@ -764,12 +1274,20 @@ function unlockQuotePrices() {
   document.querySelector("#unlock-prices").textContent = "Precios desbloqueados";
 }
 
-function deleteQuote(quoteId) {
+async function deleteQuote(quoteId) {
   const quote = state.quoteClients.find((item) => item.id === quoteId);
   if (!quote) return;
   const quoteName = quote.company || quote.contact || "esta cotización";
   const confirmed = window.confirm(`¿Eliminar la cotización de ${quoteName}? Esta acción no se puede deshacer.`);
   if (!confirmed) return;
+
+  if (isSupabaseSession()) {
+    const { error } = await supabaseClient.from("quotes").delete().eq("id", quoteId);
+    if (error) {
+      window.alert(`No pude eliminar la cotización en Supabase: ${error.message}`);
+      return;
+    }
+  }
 
   state.quoteClients = state.quoteClients.filter((item) => item.id !== quoteId);
   if (editingQuoteId === quoteId) {
@@ -822,6 +1340,7 @@ function selectedQuoteProducts() {
         basePrice,
         price,
         quantity,
+        isLot: Boolean(product.isLot),
         baseLineTotal,
         lineTotal,
         commissionAdjustmentPercent,
@@ -849,6 +1368,30 @@ function calculateQuoteTotals(products) {
   };
 }
 
+function formatProductQuantity(product) {
+  const quantity = Number(product && product.quantity) || Number(product && product.defaultQuantity) || 1;
+  return product && product.isLot ? `${quantity} LOTE` : String(quantity);
+}
+
+function quoteTypeLabel(type) {
+  return type === "maintenance" ? "Mantenimiento y obra civil" : "Paneles solares";
+}
+
+function cleanPassword(value) {
+  return String(value || "").trim();
+}
+
+function friendlyAuthError(error) {
+  const message = String((error && error.message) || "");
+  if (message === "Invalid login credentials") {
+    return "Correo o contraseña incorrectos. En el lab debes entrar con el correo completo y la contraseña exacta creada en Usuarios.";
+  }
+  if (message === "Email not confirmed") {
+    return "Ese correo todavía no está confirmado en Supabase.";
+  }
+  return message || "No pude iniciar sesión en Supabase.";
+}
+
 function commissionPriceAdjustmentPercent() {
   const percent = Math.min(
     Math.max(Number(document.querySelector("#quote-commission-percent").value) || 0, 0),
@@ -872,14 +1415,23 @@ function calculateCommission(products) {
   };
 }
 
-function addProduct(event) {
+async function addProduct(event) {
   event.preventDefault();
   const product = {
     id: editingProductId || createId(),
     name: document.querySelector("#product-name").value.trim(),
+    workArea: document.querySelector("#product-work-area").value.trim(),
+    isLot: document.querySelector("#product-is-lot").checked,
     price: Number(document.querySelector("#product-price").value) || 0,
     defaultQuantity: Math.max(Number(document.querySelector("#product-quantity").value) || 1, 1),
   };
+
+  if (isSupabaseSession()) {
+    const savedProduct = await saveSupabaseProduct(product, Boolean(editingProductId));
+    if (!savedProduct) return;
+    product.id = savedProduct.id;
+    product.legacyId = savedProduct.legacy_id;
+  }
 
   if (editingProductId) {
     state.products = state.products.map((item) => (item.id === editingProductId ? product : item));
@@ -893,12 +1445,51 @@ function addProduct(event) {
   renderQuoteProducts();
 }
 
+async function saveSupabaseProduct(product, isEditing) {
+  const payload = {
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    legacy_id: product.legacyId || (isEditing ? null : product.id),
+    name: product.name,
+    work_area: product.workArea || "",
+    is_lot: Boolean(product.isLot),
+    price: product.price,
+    default_quantity: product.defaultQuantity,
+    active: true,
+  };
+
+  const query = isEditing
+    ? supabaseClient.from("products").update(payload).eq("id", product.id).select().single()
+    : supabaseClient.from("products").insert(payload).select().single();
+  let { data, error } = await query;
+
+  if (error && isMissingOptionalProductColumn(error)) {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.work_area;
+    delete fallbackPayload.is_lot;
+    const fallbackQuery = isEditing
+      ? supabaseClient.from("products").update(fallbackPayload).eq("id", product.id).select().single()
+      : supabaseClient.from("products").insert(fallbackPayload).select().single();
+    const fallbackResult = await fallbackQuery;
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
+
+  if (error) {
+    window.alert(`No pude guardar el producto en Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data;
+}
+
 function editProduct(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
 
   editingProductId = product.id;
   document.querySelector("#product-name").value = product.name || "";
+  document.querySelector("#product-work-area").value = product.workArea || "";
+  document.querySelector("#product-is-lot").checked = Boolean(product.isLot);
   document.querySelector("#product-price").value = product.price || 0;
   document.querySelector("#product-quantity").value = product.defaultQuantity || 1;
   updateProductFormMode();
@@ -909,6 +1500,7 @@ function resetProductForm() {
   editingProductId = null;
   document.querySelector("#product-form").reset();
   document.querySelector("#product-quantity").value = 1;
+  document.querySelector("#product-is-lot").checked = false;
   updateProductFormMode();
 }
 
@@ -932,8 +1524,9 @@ function renderProductsCatalog() {
           <article class="product-card">
             <strong>${escapeHtml(product.name)}</strong>
             <div class="deal-meta">
+              <span>Área: ${escapeHtml(product.workArea || "Sin especificar")}</span>
               <span>${money.format(product.price)}</span>
-              <span>Cantidad sugerida: ${product.defaultQuantity}</span>
+              <span>Cantidad sugerida: ${formatProductQuantity(product)}</span>
             </div>
             <div class="quote-card-actions">
               <button class="ghost-button" data-edit-product="${product.id}" type="button">Editar</button>
@@ -952,11 +1545,14 @@ function renderProductsCatalog() {
   });
 }
 
-function addUser(event) {
+async function addUser(event) {
   event.preventDefault();
-  const user = document.querySelector("#new-user-login").value.trim();
+  if (isSupabaseSession()) await refreshSupabaseUsers();
+
+  const user = document.querySelector("#new-user-login").value.trim().toLowerCase();
   const existingUser = state.users.find((item) => item.user === editingUserName);
   const currentSignature = signatureDataUrl || readSignaturePad();
+  const selectedRole = document.querySelector("#new-user-role").value || "seller";
 
   if (!editingUserName && state.users.some((item) => item.user === user)) {
     window.alert("Ese usuario ya existe.");
@@ -969,13 +1565,27 @@ function addUser(event) {
   }
 
   const updatedUser = {
+    id: existingUser && existingUser.id,
     user,
-    password: document.querySelector("#new-user-password").value,
+    password: cleanPassword(document.querySelector("#new-user-password").value),
     name: document.querySelector("#new-user-name").value.trim().toUpperCase(),
     position: document.querySelector("#new-user-position").value.trim().toUpperCase(),
     signature: currentSignature,
-    superAdmin: isRicardoUser({ user, name: document.querySelector("#new-user-name").value.trim() }),
+    superAdmin: selectedRole === "super_admin",
+    role: selectedRole,
   };
+
+  if (isSupabaseSession()) {
+    const savedUser = await saveSupabaseUser(updatedUser, Boolean(editingUserName));
+    if (!savedUser) return;
+    updatedUser.id = savedUser.id;
+    updatedUser.user = savedUser.username;
+    updatedUser.name = savedUser.full_name;
+    updatedUser.position = savedUser.position;
+    updatedUser.signature = savedUser.signature_url || "";
+    updatedUser.role = savedUser.role;
+    updatedUser.superAdmin = savedUser.role === "super_admin";
+  }
 
   if (editingUserName) {
     state.users = state.users.map((item) => (item.user === editingUserName ? updatedUser : item));
@@ -991,6 +1601,70 @@ function addUser(event) {
   resetUserForm();
   renderUsers();
   syncAuthView();
+  if (!editingUserName && isSupabaseSession()) {
+    window.alert(`Usuario creado. Para entrar usa el correo ${updatedUser.user} y la contraseña que acabas de asignar.`);
+  }
+}
+
+async function saveSupabaseUser(user, isEditing) {
+  let authUserId = user.id;
+
+  if (!isEditing) {
+    if (!supabaseSignupClient) {
+      window.alert("Supabase no está disponible para crear accesos.");
+      return null;
+    }
+
+    const { data, error } = await supabaseSignupClient.auth.signUp({
+      email: user.user,
+      password: user.password,
+      options: {
+        data: {
+          full_name: user.name,
+          position: user.position,
+          role: user.role || "seller",
+        },
+      },
+    });
+
+    if (error || !data.user) {
+      window.alert(`No pude crear el acceso en Supabase: ${error ? error.message : "sin usuario devuelto"}`);
+      return null;
+    }
+
+    authUserId = data.user.id;
+  }
+
+  const payload = {
+    id: authUserId,
+    organization_id: XOLTEC_ORGANIZATION_ID,
+    username: user.user,
+    full_name: user.name,
+    position: user.position,
+    role: user.role || "seller",
+    signature_url: user.signature || null,
+  };
+
+  const query = isEditing
+    ? supabaseClient
+        .from("profiles")
+        .update(payload)
+        .eq("id", authUserId)
+        .select("id, username, full_name, position, role, signature_url")
+        .single()
+    : supabaseClient
+        .from("profiles")
+        .upsert(payload, { onConflict: "id" })
+        .select("id, username, full_name, position, role, signature_url")
+        .single();
+  const { data, error } = await query;
+
+  if (error) {
+    window.alert(`El acceso se creó, pero no pude guardar el perfil del CRM: ${error.message}`);
+    return null;
+  }
+
+  return data;
 }
 
 function renderUsers() {
@@ -1008,7 +1682,7 @@ function renderUsers() {
             <div class="deal-meta">
               <span>${escapeHtml(user.user)}</span>
               <span>${escapeHtml(user.position || user.role)}</span>
-              ${user.superAdmin ? "<span>Super admin</span>" : ""}
+              <span>${userRoleLabel(user.role, user.superAdmin)}</span>
             </div>
             <div class="quote-card-actions">
               <button class="ghost-button" data-edit-user="${user.user}" type="button">Editar</button>
@@ -1037,9 +1711,11 @@ function editUser(userName) {
 
   editingUserName = user.user;
   document.querySelector("#new-user-login").value = user.user;
-  document.querySelector("#new-user-password").value = user.password;
+  document.querySelector("#new-user-password").value = "";
+  document.querySelector("#new-user-password").required = false;
   document.querySelector("#new-user-name").value = user.name;
   document.querySelector("#new-user-position").value = user.position || user.role || "";
+  document.querySelector("#new-user-role").value = user.role || (user.superAdmin ? "super_admin" : "seller");
   loadSignatureToPad(user.signature || "");
   updateUserFormMode();
   document.querySelector("#user-form").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1048,6 +1724,8 @@ function editUser(userName) {
 function resetUserForm() {
   editingUserName = null;
   document.querySelector("#user-form").reset();
+  document.querySelector("#new-user-password").required = true;
+  document.querySelector("#new-user-role").value = "seller";
   clearSignaturePad();
   updateUserFormMode();
 }
@@ -1060,12 +1738,20 @@ function updateUserFormMode() {
   document.querySelector("#user-cancel-edit").classList.toggle("hidden", !isEditing);
 }
 
-function deleteUser(userName) {
+async function deleteUser(userName) {
   const user = state.users.find((item) => item.user === userName);
   if (!user || isCurrentUser(user)) return;
 
   const confirmed = window.confirm(`¿Eliminar el usuario ${user.user}?`);
   if (!confirmed) return;
+
+  if (isSupabaseSession() && user.id) {
+    const { error } = await supabaseClient.from("profiles").delete().eq("id", user.id);
+    if (error) {
+      window.alert(`No pude eliminar el perfil del CRM: ${error.message}`);
+      return;
+    }
+  }
 
   state.users = state.users.filter((item) => item.user !== userName);
   if (editingUserName === userName) {
@@ -1075,9 +1761,19 @@ function deleteUser(userName) {
   renderUsers();
 }
 
+function userRoleLabel(role, superAdmin = false) {
+  if (role === "super_admin" || superAdmin) return "Super admin";
+  if (role === "admin") return "Admin";
+  return "Vendedor";
+}
+
 function isCurrentUser(user) {
   const currentUser = getCurrentUser();
-  return Boolean(user && currentUser && user.user === currentUser.user);
+  return Boolean(
+    user &&
+      currentUser &&
+      ((user.id && currentUser.id && user.id === currentUser.id) || user.user === currentUser.user),
+  );
 }
 
 function setupSignaturePad() {
@@ -1170,18 +1866,28 @@ function loadSignatureToPad(dataUrl) {
   image.src = dataUrl;
 }
 
-function deleteProduct(productId) {
+async function deleteProduct(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
 
-  const password = window.prompt("Contraseña de administrador para eliminar productos:");
-  if (!isAdminPassword(password)) {
-    window.alert("Contraseña incorrecta.");
-    return;
+  if (!isSupabaseSession()) {
+    const password = window.prompt("Contraseña de administrador para eliminar productos:");
+    if (!isAdminPassword(password)) {
+      window.alert("Contraseña incorrecta.");
+      return;
+    }
   }
 
   const confirmed = window.confirm(`¿Eliminar el producto "${product.name}"?`);
   if (!confirmed) return;
+
+  if (isSupabaseSession()) {
+    const { error } = await supabaseClient.from("products").update({ active: false }).eq("id", productId);
+    if (error) {
+      window.alert(`No pude eliminar el producto en Supabase: ${error.message}`);
+      return;
+    }
+  }
 
   state.products = state.products.filter((item) => item.id !== productId);
   if (editingProductId === productId) {
@@ -1190,6 +1896,16 @@ function deleteProduct(productId) {
   saveState();
   renderProductsCatalog();
   renderQuoteProducts();
+}
+
+function isSupabaseSession() {
+  return Boolean(supabaseClient) && sessionStorage.getItem("ventas-crm-auth-provider") === "supabase";
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || ""),
+  );
 }
 
 function isAdminPassword(password) {
@@ -1267,7 +1983,7 @@ function filteredProducts() {
   const query = searchQuery();
   if (!query) return state.products;
   return state.products.filter((product) =>
-    matchesSearch([product.name, product.price, product.defaultQuantity].join(" "), query),
+    matchesSearch([product.name, product.workArea, product.price, product.defaultQuantity].join(" "), query),
   );
 }
 
@@ -1297,7 +2013,7 @@ function quoteSearchText(client) {
   const fiscalAddress = formatAddress(client.fiscalAddress, client.address);
   const installationAddress = formatAddress(client.installationAddress);
   const productText = (client.products || [])
-    .map((product) => [product.name, product.quantity, product.price, product.total].join(" "))
+    .map((product) => [product.name, product.workArea, product.quantity, product.price, product.total].join(" "))
     .join(" ");
   const preparedBy = state.users.find((user) => user.user === client.preparedByUser);
   return [
@@ -1316,6 +2032,7 @@ function quoteSearchText(client) {
     client.commissionAppliedPercent,
     client.commissionFor,
     client.advancePercent,
+    quoteTypeLabel(client.quoteType),
     client.totals && client.totals.subtotal,
     client.totals && client.totals.discountAmount,
     client.totals && client.totals.iva,
@@ -1376,6 +2093,7 @@ function quoteClientCard(client) {
         ${quoteDetailRow("Teléfono", client.phone)}
         ${quoteDetailRow("Correo", client.email)}
         ${quoteDetailRow("RFC", client.taxId || "Pendiente")}
+        ${quoteDetailRow("Tipo", quoteTypeLabel(client.quoteType))}
         ${quoteDetailRow("Referido por", client.referredBy || "Sin referido")}
         ${quoteDetailRow("Fecha", formatDate(client.createdAt.slice(0, 10)))}
         ${quoteDetailRow("Domicilio fiscal", fiscalAddress)}
@@ -1383,7 +2101,7 @@ function quoteClientCard(client) {
         ${client.notes ? quoteDetailRow("Observaciones:", client.notes) : ""}
       </div>
       <div class="quote-card-products">
-        ${products.map((product) => `<span>${escapeHtml(product.name)} x ${product.quantity}</span>`).join("")}
+        ${products.map((product) => `<span>${escapeHtml(product.name)} x ${escapeHtml(formatProductQuantity(product))}</span>`).join("")}
       </div>
       <div class="quote-card-total">
         <span>Descuento ${client.discountPercent || 0}%</span>
@@ -1402,6 +2120,32 @@ function quoteClientCard(client) {
           emailUrl
             ? `<a class="email-button app-action-button" href="${escapeHtml(emailUrl)}">${appIcon("mail")}Mandar correo</a>`
             : `<button class="email-button app-action-button" data-email-quote="${client.id}" type="button">${appIcon("mail")}Mandar correo</button>`
+        }
+        <button class="ghost-button" data-edit-quote="${client.id}" type="button">Editar</button>
+        <button class="danger-button" data-delete-quote="${client.id}" type="button">Eliminar</button>
+      </div>
+    </article>
+  `;
+}
+
+function quoteListItem(client) {
+  const total = (client.totals && client.totals.total) || 0;
+  const whatsappUrl = quoteWhatsAppUrl(client);
+  const emailUrl = quoteEmailUrl(client);
+  return `
+    <article class="quote-list-item">
+      <div class="quote-list-main">
+        <strong>${escapeHtml(client.company || client.contact)}</strong>
+        <span>${quoteTypeLabel(client.quoteType)} · ${formatDate(client.createdAt.slice(0, 10))}</span>
+      </div>
+      <div class="quote-list-total">${money.format(total)}</div>
+      <div class="quote-list-actions">
+        <button class="primary-button app-action-button" data-pdf-quote="${client.id}" type="button">${appIcon("pdf")}Generar PDF</button>
+        <a class="whatsapp-button app-action-button" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener">${appIcon("whatsapp")}WhatsApp</a>
+        ${
+          emailUrl
+            ? `<a class="email-button app-action-button" href="${escapeHtml(emailUrl)}">${appIcon("mail")}Correo</a>`
+            : `<button class="email-button app-action-button" data-email-quote="${client.id}" type="button">${appIcon("mail")}Correo</button>`
         }
         <button class="ghost-button" data-edit-quote="${client.id}" type="button">Editar</button>
         <button class="danger-button" data-delete-quote="${client.id}" type="button">Eliminar</button>
@@ -1453,7 +2197,7 @@ function shareQuoteByEmail(quoteId) {
 
 function quoteShareMessage(quote, channel) {
   const products = (quote.products || [])
-    .map((product) => `- ${product.name} x ${product.quantity}`)
+    .map((product) => `- ${product.name} x ${formatProductQuantity(product)}`)
     .join("\n");
   const intro = channel === "email" ? "Hola," : `Hola ${quote.contact || ""},`.trim();
   return [
@@ -1498,6 +2242,44 @@ function appIcon(type) {
   return `<span class="button-icon">${icons[type] || ""}</span>`;
 }
 
+function quoteCommercialTerms(type, total, advancePercent, balancePercent) {
+  if (type === "maintenance") {
+    const firstPayment = total * (advancePercent / 100);
+    const balancePayment = total - firstPayment;
+    return `
+      <div class="terms-card maintenance-terms">
+        <div class="terms-summary">
+          <span>COSTO TOTAL DE LOS TRABAJOS</span>
+          <strong>${money.format(total)}</strong>
+        </div>
+        <div class="payment-grid">
+          <div><span>Anticipo solicitado</span><strong>${advancePercent}% · ${money.format(firstPayment)}</strong></div>
+          <div><span>Saldo contra avance/finalización</span><strong>${balancePercent}% · ${money.format(balancePayment)}</strong></div>
+        </div>
+        <div class="notes">
+          <p>Todas las actividades descritas se realizarán por niveles, de tal manera que la totalidad de la instalación eléctrica quedará revisada y, de ser el caso, se procederá a realizar las correcciones pertinentes.</p>
+          <p>Como se comentó en la entrevista previa, nosotros no manejamos la compra del material requerido para los trabajos; sin embargo, podemos sugerir lugares donde se cuente con el material y quizá el mejor precio del mercado.</p>
+          <p>El costo total por los trabajos señalados asciende a la cantidad de <strong>${money.format(total)}</strong>. El anticipo requerido será de <strong>${advancePercent}%</strong> al inicio de los trabajos y el <strong>${balancePercent}%</strong> restante se cubrirá conforme al avance acordado y/o al finalizar el trabajo.</p>
+          <p>Cualquier trabajo que se requiera de manera adicional podrá realizarse, siempre y cuando sea consensuado por las partes involucradas y con autorización expresa.</p>
+          <p>Es importante mencionar que la solicitud de materiales se hará con 72 horas de anticipación al suministro del mismo, para que el usuario tenga el tiempo suficiente para realizar la compra.</p>
+          <p>Bajo ninguna circunstancia los técnicos asignados podrán retirar de las instalaciones del usuario ningún material. Los encargados de realizar compras, cambios o devoluciones en todo momento son los administradores del edificio.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="notes">
+      <p><strong>NOTA UNO:</strong> SE REQUIERE ${advancePercent}% DE ANTICIPO A LA FIRMA DEL PRESENTE DOCUMENTO, ${balancePercent}% AL MOMENTO DE LA INSTALACION,</p>
+      <p><strong>NOTA DOS:</strong> GARANTÍA EN PANELES Y EQUIPOS DE 20 AÑOS</p>
+      <p><strong>NOTA TRES:</strong> EN LA PRESENTE COTIZACIÓN NO SE INCLUYE EL COSTO DE OBRA CIVIL, EN CASO DE QUE EL PROYECTO LA REQUIERA,</p>
+      <p><strong>NOTA CUATRO:</strong> EL TRAMITE DE INTERCONEXION ESTA SUJETO A LOS TIEMPOS DE LA COMISION FEDERAL DE ELECTRICIDAD Y DEMAS DEPENDENCIAS INVOLUCRADAS</p>
+      <p><strong>NOTA CINCO:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
+      <p><strong>NOTA SEIS:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
+    </div>
+  `;
+}
+
 function generateQuotePdf(quoteId) {
   const quote = state.quoteClients.find((item) => item.id === quoteId);
   if (!quote) return;
@@ -1510,8 +2292,15 @@ function generateQuotePdf(quoteId) {
   const discountAmount = (quote.totals && quote.totals.discountAmount) || 0;
   const iva = (quote.totals && quote.totals.iva) || 0;
   const total = (quote.totals && quote.totals.total) || 0;
+  const discountRow =
+    discountAmount > 0 ? `<div><span>DESCUENTO</span><span>${money.format(discountAmount)}</span></div>` : "";
   const advancePercent = quote.advancePercent || 70;
   const balancePercent = Math.max(100 - advancePercent, 0);
+  const quoteType = quote.quoteType || "solar";
+  const quoteIntro = quoteType === "maintenance"
+    ? "Ponemos a su consideración nuestro presupuesto de mantenimiento y obra civil:"
+    : "Ponemos a su consideración nuestro presupuesto de paneles solares:";
+  const commercialTerms = quoteCommercialTerms(quoteType, total, advancePercent, balancePercent);
   const quoteDate = quote.createdAt ? new Date(quote.createdAt) : new Date();
   const userSignature = preparedBy.signature
     ? `<img class="signature-image" src="${preparedBy.signature}" alt="Firma de ${escapeHtml(preparedBy.name)}" />`
@@ -1521,7 +2310,8 @@ function generateQuotePdf(quoteId) {
       (product) => `
         <tr>
           <td>${escapeHtml(product.name)}</td>
-          <td>${product.quantity}</td>
+          ${quoteType === "maintenance" ? `<td>${escapeHtml(product.workArea || "Sin especificar")}</td>` : ""}
+          <td>${escapeHtml(formatProductQuantity(product))}</td>
           <td>${money.format(product.price)}</td>
           <td>${money.format(product.lineTotal)}</td>
         </tr>
@@ -1530,6 +2320,7 @@ function generateQuotePdf(quoteId) {
     .join("");
   const footer = quotePdfFooter();
   const logoUrl = new URL("assets/xoltec-logo.png", window.location.href).href;
+  const crmHomeUrl = new URL("./", window.location.href).href;
 
   const printable = window.open("", "_blank");
   if (!printable) {
@@ -1549,6 +2340,7 @@ function generateQuotePdf(quoteId) {
           @page { size: letter portrait; margin: 0; }
           * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
           body { margin: 0; color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
+          .pdf-return-bar { display: none; }
           .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.78in; position: relative; overflow: hidden; }
           .watermark { position: absolute; left: 1.35in; right: 1.35in; top: 4.15in; height: 3.4in; background: url("${logoUrl}") center / contain no-repeat; opacity: 0.16; z-index: 0; pointer-events: none; }
           .watermark.soft { top: 3.05in; opacity: 0.12; }
@@ -1566,8 +2358,10 @@ function generateQuotePdf(quoteId) {
           table { width: 100%; border-collapse: collapse; margin-top: 0; background: transparent; border: 1px solid #6b7280; border-radius: 0; overflow: visible; }
           th { background-color: #bfbfbf !important; color: #111827; font-size: 11px; letter-spacing: 0.3px; padding: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           td { border: 1px solid rgba(31,41,55,0.58); background: transparent; padding: 8px; font-size: 11.5px; }
-          td:nth-child(2), td:nth-child(3) { text-align: center; white-space: nowrap; }
-          td:nth-child(4) { text-align: right; white-space: nowrap; }
+          td:nth-child(3), td:nth-child(4) { text-align: center; white-space: nowrap; }
+          td:nth-child(5) { text-align: right; white-space: nowrap; }
+          body.solar td:nth-child(2), body.solar td:nth-child(3) { text-align: center; white-space: nowrap; }
+          body.solar td:nth-child(4) { text-align: right; white-space: nowrap; }
           .totals { width: 38%; margin-left: auto; margin-top: 16px; background: transparent; border: 0; border-radius: 0; padding: 6px 13px; box-shadow: none; }
           .totals div { display: flex; justify-content: space-between; font-weight: 700; padding: 4px 0; font-size: 12px; }
           .totals div:last-child { border-top: 1px solid #d7dde5; margin-top: 4px; padding-top: 8px; color: #0f766e; font-size: 14px; }
@@ -1603,8 +2397,19 @@ function generateQuotePdf(quoteId) {
           .process-step b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: #203a49; color: #eba83a; font-size: 12px; }
           .process-step strong { display: block; font-size: 12.5px; margin-bottom: 2px; }
           .process-step span { color: #4b5563; font-size: 11px; line-height: 1.35; }
+          .terms-card { margin-top: 18px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.82); overflow: hidden; }
+          .terms-summary { display: flex; justify-content: space-between; gap: 14px; align-items: center; background: #203a49; color: #ffffff; padding: 12px 14px; }
+          .terms-summary span { color: rgba(255,255,255,0.82); font-size: 9.5px; font-weight: 900; letter-spacing: 1.1px; }
+          .terms-summary strong { color: #eba83a; font-size: 17px; }
+          .payment-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #e5e7eb; }
+          .payment-grid div { padding: 10px 12px; border-right: 1px solid #e5e7eb; }
+          .payment-grid div:last-child { border-right: 0; }
+          .payment-grid span { display: block; color: #6b7280; font-size: 9px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+          .payment-grid strong { color: #17202b; font-size: 12px; }
           .notes { display: grid; gap: 7px; margin-top: 18px; line-height: 1.3; font-size: 11px; }
+          .terms-card .notes { margin-top: 0; padding: 12px; }
           .notes p { margin: 0; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.74); border: 1px solid #e5e7eb; }
+          .maintenance-terms .notes p { background: #f8fafc; border-left: 3px solid #eba83a; }
           .prepared { display: grid; gap: 5px; margin-top: 18px; font-size: 11.5px; line-height: 1.4; background: rgba(32,58,73,0.92); color: #ffffff; border-radius: 12px; padding: 15px 16px; box-shadow: none; }
           .prepared strong { color: #eba83a; }
           .signature { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 24px; font-size: 12px; }
@@ -1625,22 +2430,24 @@ function generateQuotePdf(quoteId) {
           .bank-item span { color: #6b7280; font-size: 8.8px; font-weight: 800; letter-spacing: 0.55px; text-transform: uppercase; }
           .bank-item strong { color: #17202b; font-size: 11px; line-height: 1.25; }
           .invoice-note { margin: 0; padding: 10px 12px; color: #4b5563; font-size: 10px; line-height: 1.35; background: #f8fafc; }
-          .solar-map-hero { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; border-bottom: 1px solid #d7dde5; padding-bottom: 14px; margin-bottom: 18px; }
-          .solar-map-hero img { width: 124px; height: auto; }
-          .solar-map-kicker { width: fit-content; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(235,168,58,0.16); color: #7a520f; font-size: 10px; font-weight: 900; letter-spacing: 1.2px; padding: 7px 12px; text-transform: uppercase; }
-          .solar-map-kicker::before { content: ""; width: 18px; height: 3px; border-radius: 99px; background: #eba83a; }
-          .solar-map-hero h1 { color: #203a49; font-size: 27px; line-height: 1.04; margin: 12px 0 8px; max-width: 520px; }
-          .solar-map-hero p { color: #5f6672; font-size: 12px; line-height: 1.42; margin: 0; max-width: 560px; }
-          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 42px 16px; position: relative; margin-top: 8px; }
-          .solar-arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-          .solar-node { min-height: 112px; border: 1px solid #d7dde5; border-radius: 14px; background: rgba(255,255,255,0.9); padding: 13px; box-shadow: 0 10px 22px rgba(15,23,42,0.06); position: relative; z-index: 1; }
-          .solar-node-head { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
-          .solar-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; }
-          .solar-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+          .solar-map-hero { background: #203a49; color: #ffffff; border-radius: 16px; padding: 18px 22px; display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
+          .solar-map-hero img { width: 132px; height: auto; }
+          .solar-map-kicker { display: block; color: #eba83a; font-size: 11px; font-weight: 900; letter-spacing: 1.4px; margin-bottom: 5px; text-transform: uppercase; }
+          .solar-map-hero h1 { color: #ffffff; font-size: 23px; line-height: 1.06; margin: 0 0 7px; max-width: 520px; }
+          .solar-map-hero p { color: rgba(255,255,255,0.82); font-size: 11.5px; line-height: 1.38; margin: 0; max-width: 560px; }
+          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px 34px; position: relative; margin-top: 8px; }
+          .solar-arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
+          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.85)); }
+          .solar-node { min-height: 94px; border: 1px solid #d7dde5; border-radius: 12px; background: rgba(255,255,255,0.95); padding: 10px 11px; box-shadow: 0 8px 18px rgba(15,23,42,0.06); position: relative; z-index: 1; }
+          .solar-node.step-4 { grid-column: 3; grid-row: 2; }
+          .solar-node.step-5 { grid-column: 2; grid-row: 2; }
+          .solar-node.step-6 { grid-column: 1; grid-row: 2; }
+          .solar-node-head { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+          .solar-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; }
+          .solar-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
           .solar-icon .cfe-mark { color: #18a058; font-size: 13px; font-weight: 900; letter-spacing: -0.6px; }
-          .solar-node h2 { color: #17202b; font-size: 13.5px; margin: 0; line-height: 1.15; }
-          .solar-node p { color: #4b5563; font-size: 10.5px; line-height: 1.35; margin: 0; }
+          .solar-node h2 { color: #17202b; font-size: 12.5px; margin: 0; line-height: 1.12; }
+          .solar-node p { color: #4b5563; font-size: 9.7px; line-height: 1.3; margin: 0; }
           .solar-node.accent .solar-icon { color: #18a058; background: #ecfdf5; border-color: #b7ebcf; }
           .solar-node.gold .solar-icon { color: #b7791f; background: #fff8e8; border-color: #f0d7a0; }
           .solar-stats-title { display: flex; align-items: center; gap: 10px; color: #203a49; font-size: 16px; margin: 18px 0 10px; }
@@ -1676,9 +2483,13 @@ function generateQuotePdf(quoteId) {
             table { font-size: 10px; }
             th, td { padding: 6px 4px; font-size: 9.5px; }
             .totals { width: 72%; }
+            .payment-grid { grid-template-columns: 1fr; }
+            .payment-grid div { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+            .payment-grid div:last-child { border-bottom: 0; }
             .annex-grid, .annex-stats { grid-template-columns: 1fr; }
             .solar-map-hero, .solar-flow, .solar-metrics, .generation-grid { grid-template-columns: 1fr; }
             .solar-arrows { display: none; }
+            .solar-node.step-4, .solar-node.step-5, .solar-node.step-6 { grid-column: auto; grid-row: auto; }
             .generation-item { border-right: 0; border-bottom: 1px solid #d7dde5; padding-bottom: 10px; }
             .generation-item:last-child { border-bottom: 0; }
             .bank-grid { grid-template-columns: 1fr; }
@@ -1690,10 +2501,19 @@ function generateQuotePdf(quoteId) {
             .footer-icon svg { width: 9px; height: 9px; }
             .footer-address { padding-left: 21px; font-size: 7.6px; line-height: 1.2; }
           }
-          @media print { button { display: none; } .page { width: 8.5in; } }
+          @media screen {
+            body { padding-top: 62px; background: #e8edf2; }
+            .pdf-return-bar { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: center; pointer-events: none; }
+            .pdf-return-button { min-height: 44px; border: 0; border-radius: 999px; background: #203a49; color: #ffffff; box-shadow: 0 12px 28px rgba(15,23,42,0.24); cursor: pointer; font: 800 14px Arial, sans-serif; padding: 0 20px; pointer-events: auto; }
+            .pdf-return-button span { color: #eba83a; }
+          }
+          @media print { body { padding-top: 0; } button, .pdf-return-bar { display: none !important; } .page { width: 8.5in; } }
         </style>
       </head>
-      <body>
+      <body class="${quoteType}">
+        <div class="pdf-return-bar">
+          <button class="pdf-return-button" type="button" onclick="if (window.opener && !window.opener.closed) { window.close(); } else { window.location.href='${crmHomeUrl}'; }"><span>←</span> Volver al CRM</button>
+        </div>
         <section class="page">
           <div class="watermark"></div>
           <div class="content">
@@ -1707,7 +2527,7 @@ function generateQuotePdf(quoteId) {
             <div class="date">${formatLongDate(quoteDate)}</div>
             <h1>${escapeHtml(quote.company || quote.contact)}</h1>
             <div class="present">PRESENTE</div>
-            <p class="intro">Ponemos a su consideración nuestro presupuesto de paneles solares:</p>
+            <p class="intro">${quoteIntro}</p>
             <div class="client-card">
               <strong>Contacto:</strong> ${escapeHtml(quote.contact)}<br>
               <strong>Teléfono:</strong> ${escapeHtml(quote.phone)}<br>
@@ -1718,13 +2538,19 @@ function generateQuotePdf(quoteId) {
             </div>
             <table>
               <thead>
-                <tr><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>PRECIO UNITARIO</th><th>TOTALES</th></tr>
+                <tr>
+                  <th>DESCRIPCIÓN</th>
+                  ${quoteType === "maintenance" ? "<th>ÁREA A TRABAJAR</th>" : ""}
+                  <th>CANTIDAD</th>
+                  <th>PRECIO UNITARIO</th>
+                  <th>TOTALES</th>
+                </tr>
               </thead>
               <tbody>${rows}</tbody>
             </table>
             <div class="totals">
               <div><span>SUBTOTAL</span><span>${money.format(subtotal)}</span></div>
-              <div><span>DESCUENTO</span><span>${money.format(discountAmount)}</span></div>
+              ${discountRow}
               <div><span>IVA</span><span>${money.format(iva)}</span></div>
               <div><span>TOTAL</span><span>${money.format(total)}</span></div>
             </div>
@@ -1740,14 +2566,7 @@ function generateQuotePdf(quoteId) {
               <span>${escapeHtml(preparedBy.name)}</span>
               <span>${escapeHtml(preparedBy.position || preparedBy.role)}</span>
             </div>
-            <div class="notes">
-              <p><strong>NOTA UNO:</strong> SE REQUIERE ${advancePercent}% DE ANTICIPO A LA FIRMA DEL PRESENTE DOCUMENTO, ${balancePercent}% AL MOMENTO DE LA INSTALACION,</p>
-              <p><strong>NOTA DOS:</strong> GARANTÍA EN PANELES Y EQUIPOS DE 20 AÑOS</p>
-              <p><strong>NOTA TRES:</strong> EN LA PRESENTE COTIZACIÓN NO SE INCLUYE EL COSTO DE OBRA CIVIL, EN CASO DE QUE EL PROYECTO LA REQUIERA,</p>
-              <p><strong>NOTA CUATRO:</strong> EL TRAMITE DE INTERCONEXION ESTA SUJETO A LOS TIEMPOS DE LA COMISION FEDERAL DE ELECTRICIDAD Y DEMAS DEPENDENCIAS INVOLUCRADAS</p>
-              <p><strong>NOTA:</strong> ESTE PRESUPUESTO ESTA SUJETO A CAMBIOS DE ACUERDO AL TIPO DE CAMBIO VIGENTE, SIN EMBARGO, TIENE UNA VIGENCIA DE 8 DIAS HABILES</p>
-              <p><strong>NOTA:</strong> APLICA UN DESCUENTO ESPECIAL DEL 8% EN EL COSTO, O BIEN SE PUEDE CANJEAR POR DOS PANELES MAS</p>
-            </div>
+            ${commercialTerms}
             <div class="signature">
               <div class="signature-box">
                 <div class="signature-value">${formatLongDate(quoteDate)}</div>
@@ -1783,6 +2602,7 @@ function generateQuotePdf(quoteId) {
           </div>
           ${footer}
         </section>
+        ${quoteType === "solar" ? `
         <section class="page page-break">
           <div class="watermark soft"></div>
           <div class="content">
@@ -1878,39 +2698,39 @@ function generateQuotePdf(quoteId) {
               <img src="${logoUrl}" alt="XOLTEC" />
             </div>
             <div class="solar-flow">
-              <svg class="solar-arrows" viewBox="0 0 720 270" preserveAspectRatio="none" aria-hidden="true">
+              <svg class="solar-arrows" viewBox="0 0 720 236" preserveAspectRatio="none" aria-hidden="true">
                 <defs>
-                  <marker id="solar-arrow-head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                    <path d="M0,0 L8,4 L0,8 Z" fill="#18a058"></path>
+                  <marker id="solar-arrow-head" markerWidth="6" markerHeight="6" refX="5.6" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#18a058"></path>
                   </marker>
                 </defs>
-                <path d="M225 56 H252" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M468 56 H495" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M600 112 L115 174" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M600 112 L360 174" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M600 112 L600 174" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M220 47 H250" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M470 47 H500" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M610 98 V138" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M500 189 H470" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M250 189 H220" marker-end="url(#solar-arrow-head)"></path>
               </svg>
-              <article class="solar-node">
+              <article class="solar-node step-1">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("panel")}</span><h2>1. Paneles</h2></div>
                 <p>Capturan radiación solar y producen corriente continua para iniciar la generación.</p>
               </article>
-              <article class="solar-node accent">
+              <article class="solar-node accent step-2">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("inverter")}</span><h2>2. Inversor</h2></div>
                 <p>Convierte corriente continua en corriente alterna apta para equipos eléctricos.</p>
               </article>
-              <article class="solar-node">
+              <article class="solar-node step-3">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("home")}</span><h2>3. Consumo</h2></div>
                 <p>La energía se usa en el hogar o negocio en tiempo real, reduciendo consumo de red.</p>
               </article>
-              <article class="solar-node accent">
+              <article class="solar-node accent step-4">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("battery")}</span><h2>4. Baterías</h2></div>
                 <p>Almacenan energía para usarla cuando el proyecto lo requiere.</p>
               </article>
-              <article class="solar-node">
+              <article class="solar-node step-5">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("cfe")}</span><h2>5. Red CFE</h2></div>
                 <p>Los excedentes pueden inyectarse mediante medidor bidireccional.</p>
               </article>
-              <article class="solar-node gold">
+              <article class="solar-node gold step-6">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("monitor")}</span><h2>6. Monitoreo</h2></div>
                 <p>El inversor registra producción y permite revisar diagnósticos o reportes.</p>
               </article>
@@ -1933,6 +2753,7 @@ function generateQuotePdf(quoteId) {
           </div>
           ${footer}
         </section>
+        ` : ""}
         <script>window.addEventListener("load", () => setTimeout(() => window.print(), 250));</script>
       </body>
     </html>
@@ -2075,11 +2896,8 @@ function ensureStarterUsers(existingUsers) {
     const existingIndex = usersWithoutLegacyAdmin.findIndex((user) => isRicardoUser(user));
     if (existingIndex >= 0) {
       usersWithoutLegacyAdmin[existingIndex] = {
+        ...starterUser,
         ...usersWithoutLegacyAdmin[existingIndex],
-        user: starterUser.user,
-        password: starterUser.password,
-        name: usersWithoutLegacyAdmin[existingIndex].name || starterUser.name,
-        position: usersWithoutLegacyAdmin[existingIndex].position || starterUser.position,
         superAdmin: true,
       };
     } else {
