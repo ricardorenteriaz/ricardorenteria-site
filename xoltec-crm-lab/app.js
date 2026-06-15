@@ -2141,12 +2141,12 @@ function quoteListItem(client) {
       </div>
       <div class="quote-list-total">${money.format(total)}</div>
       <div class="quote-list-actions">
-        <button class="primary-button app-action-button icon-only-action" data-pdf-quote="${client.id}" type="button" title="Generar PDF" aria-label="Generar PDF">${appIcon("pdf")}</button>
-        <a class="whatsapp-button app-action-button icon-only-action" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener" title="Mandar WhatsApp" aria-label="Mandar WhatsApp">${appIcon("whatsapp")}</a>
+        <button class="primary-button app-action-button" data-pdf-quote="${client.id}" type="button">${appIcon("pdf")}Generar PDF</button>
+        <a class="whatsapp-button app-action-button" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener">${appIcon("whatsapp")}WhatsApp</a>
         ${
           emailUrl
-            ? `<a class="email-button app-action-button icon-only-action" href="${escapeHtml(emailUrl)}" title="Mandar correo" aria-label="Mandar correo">${appIcon("mail")}</a>`
-            : `<button class="email-button app-action-button icon-only-action" data-email-quote="${client.id}" type="button" title="Mandar correo" aria-label="Mandar correo">${appIcon("mail")}</button>`
+            ? `<a class="email-button app-action-button" href="${escapeHtml(emailUrl)}">${appIcon("mail")}Correo</a>`
+            : `<button class="email-button app-action-button" data-email-quote="${client.id}" type="button">${appIcon("mail")}Correo</button>`
         }
         <button class="ghost-button" data-edit-quote="${client.id}" type="button">Editar</button>
         <button class="danger-button" data-delete-quote="${client.id}" type="button">Eliminar</button>
