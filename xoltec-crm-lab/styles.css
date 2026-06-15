@@ -271,6 +271,13 @@ button {
   grid-column: 1 / -1;
 }
 
+.maintenance-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 18px;
+  align-items: start;
+}
+
 .backup-copy {
   margin: 0 0 18px;
   color: var(--muted);
@@ -1226,7 +1233,8 @@ menu {
   .dashboard-grid,
   .task-composer,
   .quotes-layout,
-  .products-layout {
+  .products-layout,
+  .maintenance-layout {
     grid-template-columns: 1fr;
   }
 }

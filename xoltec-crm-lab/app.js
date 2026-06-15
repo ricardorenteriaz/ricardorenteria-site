@@ -213,6 +213,7 @@ const views = {
   quoteHistory: document.querySelector("#quote-history-view"),
   products: document.querySelector("#products-view"),
   users: document.querySelector("#users-view"),
+  maintenance: document.querySelector("#maintenance-view"),
 };
 
 const titles = {
@@ -224,6 +225,7 @@ const titles = {
   quoteHistory: "Cotizaciones",
   products: "Productos",
   users: "Usuarios",
+  maintenance: "Mantenimiento",
 };
 
 document.querySelectorAll(".nav-item").forEach((button) => {
@@ -266,7 +268,6 @@ document.querySelector("#login-form").addEventListener("submit", login);
 document.querySelector("#logout-button").addEventListener("click", logout);
 document.querySelector("#mobile-menu-toggle").addEventListener("click", toggleMobileMenu);
 document.querySelector(".sidebar").addEventListener("click", closeMobileMenuFromBackdrop);
-document.querySelector("#download-backup-button").addEventListener("click", downloadCrmBackup);
 document.querySelector("#admin-download-backup").addEventListener("click", downloadCrmBackup);
 document.querySelector("#admin-copy-backup").addEventListener("click", copyCrmBackup);
 document.querySelector("#admin-import-backup-text").addEventListener("click", importCrmData);
@@ -699,18 +700,24 @@ function syncAuthView() {
 
   if (!isAuthenticated) {
     document.querySelector("#login-user").focus();
-  } else if (!currentUser.superAdmin && views.users && views.users.classList.contains("active")) {
+  } else if (
+    !currentUser.superAdmin &&
+    ((views.users && views.users.classList.contains("active")) ||
+      (views.maintenance && views.maintenance.classList.contains("active")))
+  ) {
     setView("quotes");
   }
 }
 
 function setView(view) {
+  if (!views[view]) return;
   Object.values(views).forEach((section) => section.classList.remove("active"));
   views[view].classList.add("active");
   document.querySelector("#view-title").textContent = titles[view];
   document.body.dataset.view = view;
-  document.querySelector(".search").classList.toggle("hidden", view === "users");
-  if (view === "users") document.querySelector("#search-input").value = "";
+  const hideSearch = view === "users" || view === "maintenance";
+  document.querySelector(".search").classList.toggle("hidden", hideSearch);
+  if (hideSearch) document.querySelector("#search-input").value = "";
   if (view === "users" && isSupabaseSession()) refreshSupabaseUsers();
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
