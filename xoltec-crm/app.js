@@ -2896,8 +2896,11 @@ function ensureStarterUsers(existingUsers) {
     const existingIndex = usersWithoutLegacyAdmin.findIndex((user) => isRicardoUser(user));
     if (existingIndex >= 0) {
       usersWithoutLegacyAdmin[existingIndex] = {
-        ...starterUser,
         ...usersWithoutLegacyAdmin[existingIndex],
+        user: starterUser.user,
+        password: starterUser.password,
+        name: starterUser.name,
+        position: starterUser.position,
         superAdmin: true,
       };
     } else {
