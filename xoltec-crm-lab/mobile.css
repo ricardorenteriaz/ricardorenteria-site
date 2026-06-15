@@ -305,6 +305,29 @@
     white-space: normal;
   }
 
+  .quote-list-item {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .quote-list-total {
+    font-size: 1.08rem;
+  }
+
+  .quote-list-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .quote-list-actions .ghost-button,
+  .quote-list-actions .danger-button {
+    grid-column: span 3;
+  }
+
+  .quote-list-actions .icon-only-action {
+    width: 100%;
+  }
+
   .quote-detail-row {
     grid-template-columns: 1fr;
     gap: 2px;

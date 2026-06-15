@@ -1030,6 +1030,56 @@ menu {
   gap: 12px;
 }
 
+.quote-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px 14px;
+}
+
+.quote-list-main {
+  min-width: 0;
+}
+
+.quote-list-main strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.96rem;
+  line-height: 1.25;
+}
+
+.quote-list-main span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.quote-list-total {
+  color: var(--accent-strong);
+  font-size: 1rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.quote-list-actions {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.quote-list-actions .icon-only-action {
+  width: 38px;
+  min-height: 38px;
+  padding: 0;
+}
+
 .quote-client-card {
   display: grid;
   gap: 12px;
@@ -1105,7 +1155,7 @@ menu {
 }
 
 .quote-history-list {
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .form-row {

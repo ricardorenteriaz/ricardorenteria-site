@@ -244,7 +244,6 @@ document.querySelector("#deal-form").addEventListener("submit", addDeal);
 document.querySelector("#task-form").addEventListener("submit", addTask);
 document.querySelector("#quote-client-form").addEventListener("submit", addQuoteClient);
 document.querySelector("#quote-client-list").addEventListener("click", handleQuoteActionClick);
-document.querySelector("#quote-latest-list").addEventListener("click", handleQuoteActionClick);
 document.querySelector("#quote-cancel-edit").addEventListener("click", resetQuoteForm);
 document.querySelector("#unlock-prices").addEventListener("click", unlockQuotePrices);
 document.querySelector("#same-install-address").addEventListener("change", syncInstallAddress);
@@ -1090,14 +1089,9 @@ async function saveSupabaseQuote(quote, isEditing) {
 
 function renderQuoteClients() {
   const clients = filteredQuoteClients();
-  const latestQuote = state.quoteClients[0] ? [state.quoteClients[0]] : [];
-  document.querySelector("#quote-latest-count").textContent = String(latestQuote.length);
-  document.querySelector("#quote-latest-list").innerHTML =
-    latestQuote.map(quoteClientCard).join("") || emptyState("Aún no hay cotizaciones capturadas");
-
   document.querySelector("#quote-client-count").textContent = String(clients.length);
   document.querySelector("#quote-client-list").innerHTML =
-    clients.map(quoteClientCard).join("") || emptyState("No hay cotizaciones guardadas");
+    clients.map(quoteListItem).join("") || emptyState("No hay cotizaciones guardadas");
 }
 
 function handleQuoteActionClick(event) {
@@ -2084,6 +2078,32 @@ function quoteClientCard(client) {
           emailUrl
             ? `<a class="email-button app-action-button" href="${escapeHtml(emailUrl)}">${appIcon("mail")}Mandar correo</a>`
             : `<button class="email-button app-action-button" data-email-quote="${client.id}" type="button">${appIcon("mail")}Mandar correo</button>`
+        }
+        <button class="ghost-button" data-edit-quote="${client.id}" type="button">Editar</button>
+        <button class="danger-button" data-delete-quote="${client.id}" type="button">Eliminar</button>
+      </div>
+    </article>
+  `;
+}
+
+function quoteListItem(client) {
+  const total = (client.totals && client.totals.total) || 0;
+  const whatsappUrl = quoteWhatsAppUrl(client);
+  const emailUrl = quoteEmailUrl(client);
+  return `
+    <article class="quote-list-item">
+      <div class="quote-list-main">
+        <strong>${escapeHtml(client.company || client.contact)}</strong>
+        <span>${quoteTypeLabel(client.quoteType)} · ${formatDate(client.createdAt.slice(0, 10))}</span>
+      </div>
+      <div class="quote-list-total">${money.format(total)}</div>
+      <div class="quote-list-actions">
+        <button class="primary-button app-action-button icon-only-action" data-pdf-quote="${client.id}" type="button" title="Generar PDF" aria-label="Generar PDF">${appIcon("pdf")}</button>
+        <a class="whatsapp-button app-action-button icon-only-action" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener" title="Mandar WhatsApp" aria-label="Mandar WhatsApp">${appIcon("whatsapp")}</a>
+        ${
+          emailUrl
+            ? `<a class="email-button app-action-button icon-only-action" href="${escapeHtml(emailUrl)}" title="Mandar correo" aria-label="Mandar correo">${appIcon("mail")}</a>`
+            : `<button class="email-button app-action-button icon-only-action" data-email-quote="${client.id}" type="button" title="Mandar correo" aria-label="Mandar correo">${appIcon("mail")}</button>`
         }
         <button class="ghost-button" data-edit-quote="${client.id}" type="button">Editar</button>
         <button class="danger-button" data-delete-quote="${client.id}" type="button">Eliminar</button>
