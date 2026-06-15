@@ -2360,7 +2360,7 @@ function generateQuotePdf(quoteId) {
     .map((pageRows, index, pages) => {
       const isLastProductPage = index === pages.length - 1;
       return `
-        <section class="page quote-page product-page">
+        <section class="page quote-page product-page page-break">
           <div class="watermark soft"></div>
           <div class="content product-continuation">
             <table>
@@ -2605,9 +2605,9 @@ function generateQuotePdf(quoteId) {
             body { padding-top: 0 !important; }
             button, .pdf-return-bar { display: none !important; }
             .page { width: 8.5in; overflow: hidden; }
-            .quote-page { display: block; min-height: auto; overflow: visible; }
-            .quote-page .content { display: block; }
-            .quote-page .footer { position: static; margin-top: 0.18in; }
+            .quote-page { display: flex; flex-direction: column; height: 11in; min-height: 11in; overflow: hidden; }
+            .quote-page .content { display: block; flex: 1 1 auto; }
+            .quote-page .footer { position: static; margin-top: auto; }
             .product-page { min-height: 11in; overflow: hidden; }
             .product-page .content { min-height: calc(11in - 1.7in); }
             .product-page .footer { position: absolute; left: 0.5in; right: 0.5in; bottom: 0.42in; margin-top: 0; }
