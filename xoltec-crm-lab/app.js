@@ -2434,10 +2434,13 @@ function generateQuotePdf(quoteId) {
           .solar-map-kicker { display: block; color: #eba83a; font-size: 11px; font-weight: 900; letter-spacing: 1.4px; margin-bottom: 5px; text-transform: uppercase; }
           .solar-map-hero h1 { color: #ffffff; font-size: 23px; line-height: 1.06; margin: 0 0 7px; max-width: 520px; }
           .solar-map-hero p { color: rgba(255,255,255,0.82); font-size: 11.5px; line-height: 1.38; margin: 0; max-width: 560px; }
-          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px 28px; position: relative; margin-top: 8px; }
+          .solar-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px 34px; position: relative; margin-top: 8px; }
           .solar-arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
-          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.9)); }
+          .solar-arrows path { fill: none; stroke: #18a058; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.85)); }
           .solar-node { min-height: 94px; border: 1px solid #d7dde5; border-radius: 12px; background: rgba(255,255,255,0.95); padding: 10px 11px; box-shadow: 0 8px 18px rgba(15,23,42,0.06); position: relative; z-index: 1; }
+          .solar-node.step-4 { grid-column: 3; grid-row: 2; }
+          .solar-node.step-5 { grid-column: 2; grid-row: 2; }
+          .solar-node.step-6 { grid-column: 1; grid-row: 2; }
           .solar-node-head { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
           .solar-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #eef6f5; color: #203a49; border: 1px solid #d7dde5; }
           .solar-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
@@ -2485,6 +2488,7 @@ function generateQuotePdf(quoteId) {
             .annex-grid, .annex-stats { grid-template-columns: 1fr; }
             .solar-map-hero, .solar-flow, .solar-metrics, .generation-grid { grid-template-columns: 1fr; }
             .solar-arrows { display: none; }
+            .solar-node.step-4, .solar-node.step-5, .solar-node.step-6 { grid-column: auto; grid-row: auto; }
             .generation-item { border-right: 0; border-bottom: 1px solid #d7dde5; padding-bottom: 10px; }
             .generation-item:last-child { border-bottom: 0; }
             .bank-grid { grid-template-columns: 1fr; }
@@ -2684,39 +2688,39 @@ function generateQuotePdf(quoteId) {
               <img src="${logoUrl}" alt="XOLTEC" />
             </div>
             <div class="solar-flow">
-              <svg class="solar-arrows" viewBox="0 0 720 270" preserveAspectRatio="none" aria-hidden="true">
+              <svg class="solar-arrows" viewBox="0 0 720 236" preserveAspectRatio="none" aria-hidden="true">
                 <defs>
-                  <marker id="solar-arrow-head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                    <path d="M0,0 L8,4 L0,8 Z" fill="#18a058"></path>
+                  <marker id="solar-arrow-head" markerWidth="6" markerHeight="6" refX="5.6" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#18a058"></path>
                   </marker>
                 </defs>
-                <path d="M205 47 H258" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M462 47 H515" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M615 96 V122 H105 V150" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M205 198 H258" marker-end="url(#solar-arrow-head)"></path>
-                <path d="M462 198 H515" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M220 47 H250" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M470 47 H500" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M610 98 V138" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M500 189 H470" marker-end="url(#solar-arrow-head)"></path>
+                <path d="M250 189 H220" marker-end="url(#solar-arrow-head)"></path>
               </svg>
-              <article class="solar-node">
+              <article class="solar-node step-1">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("panel")}</span><h2>1. Paneles</h2></div>
                 <p>Capturan radiación solar y producen corriente continua para iniciar la generación.</p>
               </article>
-              <article class="solar-node accent">
+              <article class="solar-node accent step-2">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("inverter")}</span><h2>2. Inversor</h2></div>
                 <p>Convierte corriente continua en corriente alterna apta para equipos eléctricos.</p>
               </article>
-              <article class="solar-node">
+              <article class="solar-node step-3">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("home")}</span><h2>3. Consumo</h2></div>
                 <p>La energía se usa en el hogar o negocio en tiempo real, reduciendo consumo de red.</p>
               </article>
-              <article class="solar-node accent">
+              <article class="solar-node accent step-4">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("battery")}</span><h2>4. Baterías</h2></div>
                 <p>Almacenan energía para usarla cuando el proyecto lo requiere.</p>
               </article>
-              <article class="solar-node">
+              <article class="solar-node step-5">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("cfe")}</span><h2>5. Red CFE</h2></div>
                 <p>Los excedentes pueden inyectarse mediante medidor bidireccional.</p>
               </article>
-              <article class="solar-node gold">
+              <article class="solar-node gold step-6">
                 <div class="solar-node-head"><span class="solar-icon">${solarMapIcon("monitor")}</span><h2>6. Monitoreo</h2></div>
                 <p>El inversor registra producción y permite revisar diagnósticos o reportes.</p>
               </article>
