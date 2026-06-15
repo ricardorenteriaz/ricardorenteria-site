@@ -20,7 +20,7 @@ const translations = {
     projectsEyebrow: "Live Projects", projectsTitle: "Private demos ready to show prospects.", xoltecEyebrow: "Protected CRM Demo", xoltecBody: "A custom CRM and quoting workflow for solar projects, with client records, product catalog, PDF quotes, internal commissions, commercial conditions, and mobile access.", openDemo: "Open private demo",
     paymentsEyebrow: "Payments", paymentsTitle: "Secure card payments for projects and professional services.", clipEyebrow: "Clip Checkout", clipTitle: "Pay retainers, project deposits, and milestones with confidence.", clipBody: "Use this section when a project is approved and you need a clean, secure way to pay by card through Clip.", clipStep1: "Confirm amount and concept", clipStep2: "Generate secure Clip checkout link", clipStep3: "Client pays by card and returns to the site", requestPaymentLink: "Request payment link", paymentAmount: "Amount", paymentConcept: "Concept", paymentName: "Name", paymentEmail: "Email", paymentFeedback: "Add the agreed amount and concept. I will send you to a secure Clip checkout to complete the card payment.", paymentFallback: "I prepared the payment request in WhatsApp while the Clip API endpoint is activated.", paymentCreating: "Creating secure Clip payment link...", paymentError: "The payment link could not be created. Please contact me by WhatsApp.", paymentSuccessEyebrow: "Payment confirmed", paymentSuccessTitle: "Your payment was approved.", paymentSuccessBody: "You can download a payment receipt for your records. This receipt does not replace a fiscal invoice.", downloadReceipt: "Download receipt PDF", receiptQuestions: "Questions about this payment",
     skillsEyebrow: "Core Skills", skillsTitle: "Built for execution-heavy environments.", skillBusiness: "Business Operations", skillProcess: "Process Optimization", skillExecutive: "Executive Support", skillSystems: "IT Systems", skillCrm: "Custom CRM", skillLanding: "Landing Pages", skillTransformation: "Digital Transformation", skillProject: "Project Management", skillProblem: "Problem Solving",
-    contactEyebrow: "Contact", contactTitle: "Let's connect.", contactBody: "Available for business operations, IT systems, custom CRM, landing page, executive support, and process improvement conversations.", formTitle: "Contact me", formName: "Name", formEmail: "Email", formMessage: "Message", formSubmit: "Send message", linkedinProfile: "LinkedIn Profile", businessSocials: "Business Socials", footerText: "© 2026 Ricardo Renteria. All rights reserved."
+    contactEyebrow: "Contact", contactTitle: "Let's connect.", contactBody: "Available for business operations, IT systems, custom CRM, landing page, executive support, and process improvement conversations.", formTitle: "Contact me", formName: "Name", formEmail: "Email", formMessage: "Message", formSubmit: "Send message", formSending: "Sending message...", formSuccess: "Message sent. I will get back to you soon.", formError: "The message could not be sent. Please email me directly.", linkedinProfile: "LinkedIn Profile", businessSocials: "Business Socials", footerText: "© 2026 Ricardo Renteria. All rights reserved."
   },
   es: {
     documentTitle: "Ricardo Rentería | Operaciones, CRM e IT",
@@ -43,7 +43,7 @@ const translations = {
     projectsEyebrow: "Proyectos en línea", projectsTitle: "Demos privadas listas para mostrar a prospectos.", xoltecEyebrow: "Demo CRM protegida", xoltecBody: "CRM y flujo de cotización a la medida para proyectos solares, con clientes, catálogo de productos, PDF de cotizaciones, comisiones internas, condiciones comerciales y acceso móvil.", openDemo: "Abrir demo privada",
     paymentsEyebrow: "Pagos", paymentsTitle: "Pagos seguros con tarjeta para proyectos y servicios profesionales.", clipEyebrow: "Checkout Clip", clipTitle: "Paga anticipos, apartados y avances de proyecto con confianza.", clipBody: "Usa esta sección cuando tu proyecto esté aprobado y necesites una forma clara y segura de pagar con tarjeta mediante Clip.", clipStep1: "Confirmar monto y concepto", clipStep2: "Generar link seguro de Checkout Clip", clipStep3: "El cliente paga con tarjeta y regresa al sitio", requestPaymentLink: "Solicitar link de pago", paymentAmount: "Monto", paymentConcept: "Concepto", paymentName: "Nombre", paymentEmail: "Correo", paymentFeedback: "Agrega el monto acordado y el concepto. Te llevaré a un checkout seguro de Clip para completar el pago con tarjeta.", paymentFallback: "Preparé la solicitud de pago por WhatsApp mientras se activa el endpoint de Clip.", paymentCreating: "Creando link seguro de pago con Clip...", paymentError: "No se pudo crear el link de pago. Contáctame por WhatsApp.", paymentSuccessEyebrow: "Pago confirmado", paymentSuccessTitle: "Tu pago fue aprobado.", paymentSuccessBody: "Puedes descargar un comprobante de pago para tu registro. Este comprobante no sustituye una factura fiscal.", downloadReceipt: "Descargar comprobante PDF", receiptQuestions: "Dudas sobre este pago",
     skillsEyebrow: "Habilidades clave", skillsTitle: "Preparado para entornos donde la ejecución pesa.", skillBusiness: "Operaciones de negocio", skillProcess: "Optimización de procesos", skillExecutive: "Soporte ejecutivo", skillSystems: "Sistemas IT", skillCrm: "CRM a la medida", skillLanding: "Landing pages", skillTransformation: "Transformación digital", skillProject: "Gestión de proyectos", skillProblem: "Solución de problemas",
-    contactEyebrow: "Contacto", contactTitle: "Conectemos.", contactBody: "Disponible para conversaciones sobre operaciones de negocio, sistemas IT, CRM a la medida, landing pages, soporte ejecutivo y mejora de procesos.", formTitle: "Contáctame", formName: "Nombre", formEmail: "Correo", formMessage: "Mensaje", formSubmit: "Enviar mensaje", linkedinProfile: "Perfil de LinkedIn", businessSocials: "Redes empresariales", footerText: "© 2026 Ricardo Rentería. Todos los derechos reservados."
+    contactEyebrow: "Contacto", contactTitle: "Conectemos.", contactBody: "Disponible para conversaciones sobre operaciones de negocio, sistemas IT, CRM a la medida, landing pages, soporte ejecutivo y mejora de procesos.", formTitle: "Contáctame", formName: "Nombre", formEmail: "Correo", formMessage: "Mensaje", formSubmit: "Enviar mensaje", formSending: "Enviando mensaje...", formSuccess: "Mensaje enviado. Te responderé pronto.", formError: "No se pudo enviar el mensaje. Escríbeme directo al correo.", linkedinProfile: "Perfil de LinkedIn", businessSocials: "Redes empresariales", footerText: "© 2026 Ricardo Rentería. Todos los derechos reservados."
   }
 };
 
@@ -51,6 +51,8 @@ const languageButtons = document.querySelectorAll(".language-button");
 const disabledLinks = document.querySelectorAll(".disabled-link");
 const metaDescription = document.querySelector('meta[name="description"]');
 const paymentForm = document.querySelector("[data-payment-form]");
+const contactForm = document.querySelector(".contact-form");
+const contactFormStatus = document.querySelector("[data-contact-form-status]");
 const paymentFeedback = document.querySelector("[data-payment-feedback]");
 const paymentButtonImage = document.querySelector("[data-payment-button-image]");
 const paymentButton = document.querySelector(".clip-pay-button");
@@ -108,6 +110,37 @@ function buildWhatsAppPaymentUrl(data) {
     data.email ? `Correo: ${data.email}` : "",
   ].filter(Boolean).join("\n");
   return `https://wa.me/527294745365?text=${encodeURIComponent(message)}`;
+}
+
+function setContactFormStatus(key, type = "") {
+  if (!contactFormStatus) return;
+  const dictionary = translations[currentLanguage] || translations.en;
+  contactFormStatus.textContent = dictionary[key] || key;
+  contactFormStatus.dataset.status = type;
+}
+
+async function handleContactSubmit(event) {
+  event.preventDefault();
+  if (!contactForm) return;
+  const submitButton = contactForm.querySelector("button[type=\"submit\"]");
+  const formData = new FormData(contactForm);
+
+  try {
+    setContactFormStatus("formSending", "pending");
+    if (submitButton) submitButton.disabled = true;
+    const response = await fetch(contactForm.action, {
+      method: "POST",
+      body: formData,
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) throw new Error("Contact form error");
+    contactForm.reset();
+    setContactFormStatus("formSuccess", "success");
+  } catch (error) {
+    setContactFormStatus("formError", "error");
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
 }
 
 async function handlePaymentRequest(event) {
@@ -348,5 +381,6 @@ closePaymentResultButton?.addEventListener("click", closePaymentResult);
 paymentResult?.addEventListener("click", (event) => { if (event.target === paymentResult) closePaymentResult(); });
 showPaymentResultIfNeeded();
 
+if (contactForm) contactForm.addEventListener("submit", handleContactSubmit);
 if (paymentForm) paymentForm.addEventListener("submit", handlePaymentRequest);
 applyLanguage(localStorage.getItem("preferredLanguage") || "en");
