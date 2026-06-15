@@ -99,3 +99,31 @@
 .project-unlocked .project-gate {
   display: none;
 }
+
+@media (max-width: 620px) {
+  .project-locked,
+  .project-gate {
+    height: 100svh;
+    min-height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .project-gate {
+    padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  }
+
+  .project-gate-panel {
+    width: min(390px, 100%);
+    max-height: calc(100svh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow: hidden;
+    gap: 13px;
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .project-gate-panel img {
+    width: 132px;
+  }
+}

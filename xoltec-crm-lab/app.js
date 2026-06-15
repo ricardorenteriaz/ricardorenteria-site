@@ -2321,6 +2321,7 @@ function generateQuotePdf(quoteId) {
     .join("");
   const footer = quotePdfFooter();
   const logoUrl = new URL("assets/xoltec-logo.png", window.location.href).href;
+  const crmHomeUrl = new URL("./", window.location.href).href;
 
   const printable = window.open("", "_blank");
   if (!printable) {
@@ -2340,6 +2341,7 @@ function generateQuotePdf(quoteId) {
           @page { size: letter portrait; margin: 0; }
           * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
           body { margin: 0; color: #17202b; font-family: Arial, sans-serif; background: #ffffff; }
+          .pdf-return-bar { display: none; }
           .page { width: 8.5in; min-height: 11in; padding: 0.36in 0.5in 0.78in; position: relative; overflow: hidden; }
           .watermark { position: absolute; left: 1.35in; right: 1.35in; top: 4.15in; height: 3.4in; background: url("${logoUrl}") center / contain no-repeat; opacity: 0.16; z-index: 0; pointer-events: none; }
           .watermark.soft { top: 3.05in; opacity: 0.12; }
@@ -2500,10 +2502,19 @@ function generateQuotePdf(quoteId) {
             .footer-icon svg { width: 9px; height: 9px; }
             .footer-address { padding-left: 21px; font-size: 7.6px; line-height: 1.2; }
           }
-          @media print { button { display: none; } .page { width: 8.5in; } }
+          @media screen {
+            body { padding-top: 62px; background: #e8edf2; }
+            .pdf-return-bar { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: center; pointer-events: none; }
+            .pdf-return-button { min-height: 44px; border: 0; border-radius: 999px; background: #203a49; color: #ffffff; box-shadow: 0 12px 28px rgba(15,23,42,0.24); cursor: pointer; font: 800 14px Arial, sans-serif; padding: 0 20px; pointer-events: auto; }
+            .pdf-return-button span { color: #eba83a; }
+          }
+          @media print { body { padding-top: 0; } button, .pdf-return-bar { display: none !important; } .page { width: 8.5in; } }
         </style>
       </head>
       <body class="${quoteType}">
+        <div class="pdf-return-bar">
+          <button class="pdf-return-button" type="button" onclick="if (window.opener && !window.opener.closed) { window.close(); } else { window.location.href='${crmHomeUrl}'; }"><span>←</span> Volver al CRM</button>
+        </div>
         <section class="page">
           <div class="watermark"></div>
           <div class="content">
