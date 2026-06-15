@@ -196,6 +196,7 @@ let editingProductId = null;
 let editingUserName = null;
 let pricesUnlocked = false;
 let signatureDataUrl = "";
+let usersRefreshPromise = null;
 
 const money = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -710,10 +711,36 @@ function setView(view) {
   document.body.dataset.view = view;
   document.querySelector(".search").classList.toggle("hidden", view === "users");
   if (view === "users") document.querySelector("#search-input").value = "";
+  if (view === "users" && isSupabaseSession()) refreshSupabaseUsers();
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
   });
   document.querySelector(".sidebar").classList.remove("menu-open");
+}
+
+async function refreshSupabaseUsers() {
+  if (!supabaseClient) return;
+  if (usersRefreshPromise) return usersRefreshPromise;
+
+  usersRefreshPromise = supabaseClient
+    .from("profiles")
+    .select("id, username, full_name, position, role, signature_url")
+    .order("created_at", { ascending: true })
+    .then(({ data, error }) => {
+      if (error) {
+        console.warn("No pude recargar usuarios de Supabase.", error);
+        return;
+      }
+      state.users = data.map(profileToLocalUser);
+      saveState();
+      renderUsers();
+      syncAuthView();
+    })
+    .finally(() => {
+      usersRefreshPromise = null;
+    });
+
+  return usersRefreshPromise;
 }
 
 function toggleMobileMenu() {
@@ -1514,6 +1541,8 @@ function renderProductsCatalog() {
 
 async function addUser(event) {
   event.preventDefault();
+  if (isSupabaseSession()) await refreshSupabaseUsers();
+
   const user = document.querySelector("#new-user-login").value.trim().toLowerCase();
   const existingUser = state.users.find((item) => item.user === editingUserName);
   const currentSignature = signatureDataUrl || readSignaturePad();
