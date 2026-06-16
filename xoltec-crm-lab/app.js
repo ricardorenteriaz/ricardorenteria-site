@@ -700,13 +700,25 @@ function syncAuthView() {
 
   if (!isAuthenticated) {
     document.querySelector("#login-user").focus();
-  } else if (
-    !currentUser.superAdmin &&
-    ((views.users && views.users.classList.contains("active")) ||
-      (views.maintenance && views.maintenance.classList.contains("active")))
-  ) {
-    setView("quotes");
+  } else {
+    resetMobileViewportPosition();
+    if (
+      !currentUser.superAdmin &&
+      ((views.users && views.users.classList.contains("active")) ||
+        (views.maintenance && views.maintenance.classList.contains("active")))
+    ) {
+      setView("quotes");
+    }
   }
+}
+
+function resetMobileViewportPosition() {
+  if (!window.matchMedia("(max-width: 620px)").matches) return;
+  requestAnimationFrame(() => {
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+    window.scrollTo({ left: 0, top: window.scrollY, behavior: "auto" });
+  });
 }
 
 function setView(view) {
@@ -723,6 +735,7 @@ function setView(view) {
     button.classList.toggle("active", button.dataset.view === view);
   });
   document.querySelector(".sidebar").classList.remove("menu-open");
+  resetMobileViewportPosition();
 }
 
 async function refreshSupabaseUsers() {
