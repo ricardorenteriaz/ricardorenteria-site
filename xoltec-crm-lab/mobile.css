@@ -52,9 +52,14 @@
     max-height: calc(100svh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height: calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     align-self: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    display: grid;
+    grid-template-areas:
+      "logo"
+      "form"
+      "copy";
+    gap: 12px;
+    justify-content: stretch;
+    align-content: center;
     overflow: hidden;
     touch-action: pan-x;
     border: 0;
@@ -64,23 +69,45 @@
   }
 
   .auth-brand {
+    display: contents;
     flex: 0 0 auto;
-    justify-content: center;
     border: 0;
     background: transparent;
     color: #ffffff;
-    padding: 0 0 12px;
-    text-align: left;
+    padding: 0;
+    text-align: center;
   }
 
   .auth-brand .brand-logo.auth-logo {
+    grid-area: logo;
+    justify-self: center;
     width: 104px;
     height: 68px;
     background: transparent;
     padding: 0;
   }
 
+  .auth-brand-copy {
+    grid-area: copy;
+    justify-items: center;
+    gap: 3px;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .auth-brand-copy strong {
+    color: #ffffff;
+    font-size: 0.96rem;
+    letter-spacing: 0.04em;
+  }
+
+  .auth-brand-copy small {
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 0.78rem;
+  }
+
   .auth-form {
+    grid-area: form;
     flex: 0 0 auto;
     gap: 10px;
     border: 1px solid rgba(255, 255, 255, 0.18);
